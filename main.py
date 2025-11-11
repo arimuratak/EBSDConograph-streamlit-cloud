@@ -22,6 +22,8 @@ if st.session_state['enable_added_band'] is None:
     st.session_state['enable_added_band'] = True
 if st.session_state['just_after_bandsearch'] is None:
     st.session_state['just_after_bandsearch'] = False
+if st.session_state['unix_time'] is None:
+    st.session_state['unix_time'] = ''
 
 class MainClass:
     def __init__(self,):
@@ -223,7 +225,7 @@ if __name__ == '__main__':
                 with st.container (border = True):    
                     st.write ({'eng' : '＜＜2nd Derivative＞＞',
                            'jpn' : '＜＜2次微分画像＞＞'}[lang])
-                    xydata, is_clicked = objEBSD.display_clicked_point ()
+                    xydata, is_clicked, res = objEBSD.display_clicked_point ()
                     if is_clicked & (xydata is None):
                         st.write ('クリックは範囲外です')
 
@@ -231,7 +233,7 @@ if __name__ == '__main__':
                     st.write ({
                         'eng' : '＜＜Band date editor＞＞',
                         'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
-                    edited = objEBSD.manage_data_editor (xydata)
+                    edited = objEBSD.manage_data_editor (xydata, res)
                     if is_clicked & (xydata is None):
                         st.write ('クリックは範囲外です')
 

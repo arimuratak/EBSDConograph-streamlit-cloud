@@ -312,7 +312,7 @@ class EBSDClass:
             _, img_h = img.size
             xydata = cvtPos (res, ax_px, ax, img_h)
             #クリックされても範囲外であれば、xydataはNone
-        return xydata, is_clicked
+        return xydata, is_clicked, res
 
     def ebsd_line_display_menu (self,):
         edge, center, number = st.columns (3)
@@ -407,10 +407,14 @@ class EBSDClass:
     # データ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # 追加、行削除、数値変更 (θ, ρ_begin, ρ_end, ρ_center)
     #----------------------------------------------------
-    def manage_data_editor (self, xydata = None):
+    def manage_data_editor (self, xydata = None, res = None):
         added = False
-        res = self.addBandThetaRho (xydata)
-        if res == 'Found': added = True
+        if (res is not None) and (
+            st.session_state['unix_time'] != str (res['unix_time'])):
+            is_found = self.addBandThetaRho (xydata)
+            if is_found == 'Found':
+                st.session_state['unix_time'] = str (res['unix_time'])
+                added = True
 
         lang = st.session_state['lang']
         #col1, col2 = st.columns (2)
@@ -425,7 +429,7 @@ class EBSDClass:
             st.write (
                 {'eng' : 'Impossible to add new row...',
                  'jpn' : '新しい行は追加できません...'}[lang])
-            
+        
         if len (indices) > 0:
             removeBands (indices)
             st.session_state['lines_for_display'] = self.get_lines_for_display()

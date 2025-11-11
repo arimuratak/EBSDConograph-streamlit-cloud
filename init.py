@@ -43,3 +43,5 @@ def build_session_state ():
         st.session_state['enable_added_band'] = None
     if 'just_after_bandsearch' not in st.session_state:
         st.session_state['just_after_bandsearch'] = None
+    if 'unix_time' not in st.session_state:
+        st.session_state['unix_time'] = None
