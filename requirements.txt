@@ -1,12 +1,8 @@
-importlib
-bisect
-pickle
-zipfile
+streamlit>=1.45
 pandas
 numpy
 matplotlib
-streamlit
-streamlit_image_coordinates
+opencv-python-headless
+Pillow
 scikit-image
-opencv-python
-pillow
+streamlit-image-coordinates
