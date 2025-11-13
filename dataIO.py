@@ -1,5 +1,6 @@
 import os
 import io
+import importlib
 import zipfile
 from PIL import Image
 
@@ -60,3 +61,48 @@ def cvtPos (res, ax_px, ax, img_h):
         ydata = ymin + fy * (ymax - ymin)
         ydata *= -1
         return xdata, ydata
+
+def read_params (names, path = 'params.py'):
+    ans = {}
+    with open (path, 'r', encoding = 'utf-8') as f:
+        for line in f.readlines ():
+            if ('=' in line) & (line.split ('=')[0].strip() in names):
+                line = line.split('#')[0].split ('=')
+                name = line[0].strip()
+                vstr = line[1].strip()
+
+                if name == 'PC0':
+                    vstr = vstr.strip('[').strip(']').split (',')
+                    vstr = [v.strip() for v in vstr]
+                    
+                ans[name] = vstr
+
+    return ans
+
+def update_params (params : dict, path = 'params.py'):
+    ans = []
+    names = list (params.keys())
+    with open (path, 'r', encoding = 'utf-8') as f:
+        for line in f.readlines ():
+            if ('PC0' in line ) & ('=' in line):
+                vstr = '[' + ', '.join (params['PC0']) + ']'
+                ans.append ('PC0 = ' + vstr + '\n')
+            elif ('=' in line) & (line.split ('=')[0].strip() in names):
+                name = line.split ('=')[0].strip()
+                ans.append (name + ' = ' + params[name] + '\n')
+            else:
+                ans.append (line)
+
+    ans = ''.join (ans)
+    with open (path, 'w', encoding = 'utf-8') as f:
+        f.write (ans)
+
+
+if __name__ == '__main__':
+    names = [
+            'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
+            'thred', 'MinCorrelation',
+            'BAND_WIDTH_MIN', 'BAND_WIDTH_MAX', 'dtheta']
+    ans = read_params (names)
+    print (ans)
+

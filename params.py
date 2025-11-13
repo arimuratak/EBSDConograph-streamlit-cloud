@@ -1,10 +1,10 @@
-PC0 = [0.5, 0.2, 0.6] # [0.5, 0.2, 0.6] ,[800, 230.4, 691.2]
+PC0 = [0.5, 0.2, 0.6]
 # PCx,PCy,PCz (pixel)
 
 Circle = False
 # True: EBSD image is a circle, False: rectangular
 
-RescaleParam = 400 # 400, 0.25
+RescaleParam = 400
 # 画像のスケール変換
 
 deg = 3
@@ -18,13 +18,13 @@ thred = 5.0
 # ラドン変換の誤差値の計算
 # (誤差値とピーク高さの比較によりバンド抽出を行う。)
 
-MinCorrelation = 0.6 # 0.6 0.5
+MinCorrelation = 0.6
 # Hough変換の2次微分のモデル値との相関は理論上[-1, 1]の範囲を取るが、
 # 相関値がMinCorrelationより大きい場合にバンドとして検出する。
 # Hough画像より検出したオブジェクトがバンドかどうか判定する際に使用する。
 
-BAND_WIDTH_MIN = 0.02 # 15. * RescaleParam # 0.02
-BAND_WIDTH_MAX = 0.2 #150. * RescaleParam # 0.2
+BAND_WIDTH_MIN = 0.02
+BAND_WIDTH_MAX = 0.2
 # バンド幅の下限と上限 (px)
 
 dtheta = 5.0

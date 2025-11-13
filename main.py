@@ -1,7 +1,7 @@
 import os
 import shutil
 import streamlit as st
-from dataIO import zip_folder
+from dataIO import zip_folder, read_params
 from init import build_session_state
 from classEBSD import EBSDClass
 
@@ -24,6 +24,8 @@ if st.session_state['just_after_bandsearch'] is None:
     st.session_state['just_after_bandsearch'] = False
 if st.session_state['unix_time'] is None:
     st.session_state['unix_time'] = ''
+if st.session_state['param_name'] is None:
+    st.session_state['param_name'] = ''
 
 class MainClass:
     def __init__(self,):
@@ -80,8 +82,12 @@ class MainClass:
             {'eng' : 'Upload EBSD image file',
              'jpn' : 'EBSD画像ファイル アップロード'}[lang],
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
+        flg_new_file = False
+        if img_file is not None:
+            flg_new_file = st.session_state['file_name'] != img_file.name
         
         param_file = None
+        flg_new_param = False
         if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
             param_file = None
             st.write (
@@ -93,10 +99,11 @@ class MainClass:
                 {'eng' : 'Upload parameter file (py)',
                 'jpn' : 'パラメータファイル アップロード (py)'}[lang],
                 type = ['py'], key = 'param')
+            if param_file is not None:
+                flg_new_param = st.session_state['param_name'] != param_file.name
         
         if (img_file is not None) and (
-            param_file is not None) and (
-                st.session_state['file_name'] != img_file.name):
+            param_file is not None) and flg_new_file and flg_new_param:
             shutil.rmtree (self.input); os.makedirs (self.input)
             # EBSD画像は、inputフォルダへ保存
             fname = img_file.name
@@ -131,13 +138,13 @@ class MainClass:
         if st.session_state['uploaded']:
             menuList.append (menu0)
         elif st.session_state['doneEBSD']:
-            menuList +=  [menu0, menu3]
+            menuList +=  [menu3, menu0]
         return menuList
     
     def menu_side_jobs (self,):
         lang = st.session_state['lang']
-        #menu0 = {'eng' : 'Upload files',
-        #         'jpn' : 'ファイルアップロード'}[lang]
+        menu0 = {'eng' : 'Upload files',
+                 'jpn' : 'ファイルアップロード'}[lang]
         menu1 = {'eng' : 'Bandsearch',
                  'jpn' : 'バンドサーチ'}[lang]
         #menu2 = {'eng' : 'Band data editor',
@@ -162,8 +169,6 @@ if __name__ == '__main__':
     title_place = st.title (title)
     img_disp = st.empty() # 画像表示エリア
     
-    edit_area = st.empty ()
-    conf_area = st.empty () # バンド座標編集エリア    
 
     #サイドバー側のレイアウト＆処理
     with st.sidebar:
@@ -175,7 +180,7 @@ if __name__ == '__main__':
 
         #　ファイルアップロード
         with st.container (border = True):
-            flg = objMain.upload_files()
+            _ = objMain.upload_files()
             #    st.session_state['uploaded'] = True
             #    st.session_state['doneEBSD'] = False
                     
@@ -194,11 +199,21 @@ if __name__ == '__main__':
         #--------------------------------------------------------
         side_jobs = objMain.menu_side_jobs ()
         if len (side_jobs) > 0:
-            jobs = st.tabs (side_jobs)
+            tabs = st.tabs (side_jobs)
+            for tab, job_name in zip (tabs, side_jobs):
             #with jobs[0]:
             #    objMain.upload_files ()
-            with jobs[0]: # バンドサーチ
-                objEBSD.run_band_search ()
+                with tab: # バンドサーチ
+                    #if job_name in ['Upload files','ファイルアップロード']:
+                    #    _ = objMain.upload_files ()
+                    if job_name in ['Bandsearch','バンドサーチ']:
+                        objEBSD.params_menu ()
+                        objEBSD.run_band_search ()
+
+                        edit_area = st.empty ()
+                        conf_area = st.empty () # バンド座標編集エリア    
+
+                        
                 #if exec:
                 #    st.session_state['uploaded'] = False
                 #    st.session_state['doneEBSD'] = True
@@ -211,36 +226,38 @@ if __name__ == '__main__':
     if len (menuList) > 0:
 
         with img_disp.container():
-            menu = st.radio (
-                {'eng' : 'Select display', 'jpn' : '表示画像選択'}[lang],
-                menuList, horizontal = True,
-                index = st.session_state['radio_index'])
-            if menu in ['EBSD orignal image','EBSD元画像']: # EBSD元画像表示
-                objEBSD.display_ebsd ()
-            elif menu in ['Bandsearch result', 'バンドサーチ結果']:
-                with st.container (border = True):
-                    st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
-                           'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
-                    objEBSD.display_ebsd_with_band ()
-                with st.container (border = True):    
-                    st.write ({'eng' : '＜＜2nd Derivative＞＞',
-                           'jpn' : '＜＜2次微分画像＞＞'}[lang])
-                    xydata, is_clicked, res = objEBSD.display_clicked_point ()
-                    if is_clicked & (xydata is None):
-                        st.write ('クリックは範囲外です')
+            #menu = st.radio (
+            #    {'eng' : 'Select display', 'jpn' : '表示画像選択'}[lang],
+            #    menuList, horizontal = True,
+            #    index = st.session_state['radio_index'])
+            menu_tabs = st.tabs (menuList)
 
-                with edit_area.container(border = True):
-                    st.write ({
-                        'eng' : '＜＜Band date editor＞＞',
-                        'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
-                    edited = objEBSD.manage_data_editor (xydata, res)
-                    if is_clicked & (xydata is None):
-                        st.write ('クリックは範囲外です')
+            for tab, tab_name in zip (menu_tabs, menuList):
+                with tab:
+                    if tab_name in ['EBSD orignal image','EBSD元画像']: # EBSD元画像表示
+                        objEBSD.display_ebsd ()
+                    elif tab_name in ['Bandsearch result', 'バンドサーチ結果']:
+                        with st.container (border = True):
+                            st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
+                                    'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
+                            objEBSD.display_ebsd_with_band ()
+                        with st.container (border = True):    
+                            st.write ({'eng' : '＜＜2nd Derivative＞＞',
+                                    'jpn' : '＜＜2次微分画像＞＞'}[lang])
+                            xydata, is_clicked, res = objEBSD.display_clicked_point ()
+                        if is_clicked & (xydata is None):
+                            st.write ('クリックは範囲外です')
 
-                if edited:
-                    with conf_area.container (border = True):
-                        st.write ({
-                            'eng' : '＜＜For confirmation after edit＞＞',
-                            'jpn' : '＜＜編集後の確認用＞＞'}[lang])
-                        objEBSD.df_for_monitor ()
+                        with edit_area.container(border = True):
+                            st.write ({
+                            'eng' : '＜＜Band date editor＞＞',
+                            'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
+                            edited = objEBSD.manage_data_editor (xydata, res)
+                    
+                        if edited:
+                            with conf_area.container (border = True):
+                                st.write ({
+                                    'eng' : '＜＜For confirmation after edit＞＞',
+                                    'jpn' : '＜＜編集後の確認用＞＞'}[lang])
+                                objEBSD.df_for_monitor ()
                 

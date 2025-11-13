@@ -7,7 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
-from dataIO import fig2img, cvtPos
+from dataIO import fig2img, cvtPos, read_params, update_params
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
         addBand_theta_edges, addBand_theta_rho
@@ -23,7 +23,10 @@ class EBSDClass:
         self.H = None
         self.W = None
         self.cols = ['idx', 'score', 'θ', 'ρ_center', 'ρ_begin', 'ρ_end']
-
+        self.param_names = [
+            'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
+            'thred', 'MinCorrelation',
+            'BAND_WIDTH_MIN', 'BAND_WIDTH_MAX', 'dtheta']
         
         os.makedirs (self.input, exist_ok = True)
         os.makedirs (self.path_result, exist_ok = True)
@@ -378,7 +381,7 @@ class EBSDClass:
         flg_len = len (df) < len (newDf)
         if flg_len:
             newDf = newDf.loc[:len (df)]
-            return None, None, None, flg_len
+            return None, None, [], flg_len
         
         indices = self.search_deleted_rows (df, newDf)
         if len (indices) > 0:
@@ -417,24 +420,26 @@ class EBSDClass:
                 added = True
 
         lang = st.session_state['lang']
-        #col1, col2 = st.columns (2)
-        doneIntsec = self.add_bands_intersection ()
+        col1, col2 = st.columns (2)
+        with col1:
+            doneIntsec = self.add_bands_intersection ()
         
         old_df, new_df = self.df_for_edit ()
         # idx, col : 変更された行番号とカラム名
         # indices : 削除された行番, flg : 行が追加された(True)        
-        idx, col, indices, flg = self.judge_changed_df(old_df, new_df)
-        #print ('#1-------', idx, col)
-        if flg:
-            st.write (
-                {'eng' : 'Impossible to add new row...',
-                 'jpn' : '新しい行は追加できません...'}[lang])
+        idx, col, indices, flg_expanded = self.judge_changed_df(old_df, new_df)
         
-        if len (indices) > 0:
+        if flg_expanded:
+            with col2:
+                st.write (
+                    {'eng' : 'Delete added row. Impossible to add new row in editor...',
+                     'jpn' : 'エディタ内での新しい行は追加できませんので削除してください...'}[lang])
+        
+        elif len (indices) > 0:
             removeBands (indices)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
             
-        if (idx is not None) & (col is not None):
+        elif (idx is not None) & (col is not None):
             if col == 'ρ_center':
                 rho = new_df.loc [idx, col]
                 res = editBandCenter (rho, idx)
@@ -449,15 +454,65 @@ class EBSDClass:
             #print (st.session_state['lines_for_display'])
         #print (added, xydata, idx, col, indices)
         if added | doneIntsec:
-            if st.button ({
-                'eng' : 'Band id added. Feedback to image??',
-                'jpn' : 'バンドが追加されています。画像へ反映させますか？'}[lang]):
-                st.write ({'eng' : 'Feedback complete!!',
+            with col2:
+                if st.button ({
+                    'eng' : 'Band id added. Feedback to image??',
+                    'jpn' : 'バンドが追加されています。画像へ反映させますか？'}[lang]):
+                    st.write ({'eng' : 'Feedback complete!!',
                                'jpn' : '反映完了!!'}[lang])
 
         if (idx is not None) | (col is not None) | (len (indices) > 0):
-            if st.button ({'eng' : 'Fix data change??',
+            with col2:
+                if st.button ({'eng' : 'Fix data change??',
                                'jpn' : 'データ変更を確定しますか？'}[lang]):
-                st.write ({'eng' : 'Complete!!',
+                    st.write ({'eng' : 'Complete!!',
                                'jpn' : '確定しました!!'}[lang])      
         return (idx is not None) | (col is not None)
+    
+    def read_params (self,):
+        params = read_params ()
+        st.session_state['params'] = params
+
+    def param_PC0 (self, params):
+        PC0 = params['PC0']
+        col0, col1, col2, col3 = st.columns (4)
+        with col0: st.write ('PC0')
+        ans = []
+        for i, (pc, col) in enumerate (
+                                zip (PC0, [col1, col2, col3])):
+            with col:
+                key = 'PC0_{}'.format(i)
+                pc = st.text_input (
+                        key, PC0[i], key = key,
+                        label_visibility = 'hidden')
+                ans.append (pc)
+        
+        return ans
+
+    def param_uniq (self, params, name = 'Circle'):
+        vstr = str (params[name])
+        if name == 'Circle': name += ' (True / False)'
+        ans = st.text_input (name, vstr, key = name)
+        return ans
+    
+    def params_menu (self,):
+        lang = st.session_state['lang']
+        params = read_params (self.param_names)
+        
+        ans = {}
+        with st.expander (
+            {'eng' : 'Parameter menu',
+             'jpn' : 'パラメータメニュー'}[lang]):
+            ans['PC0'] = self.param_PC0 (params)
+            col1, col2 = st.columns (2)
+            for i, name in enumerate (self.param_names[1:]):
+                if i % 2 == 0:
+                    with col1:
+                        ans[name] = self.param_uniq (params, name)
+                else:
+                    with col2:
+                        ans[name] = self.param_uniq (params, name)
+        
+        if len (ans) > 0:
+            update_params (params = ans)
+        
