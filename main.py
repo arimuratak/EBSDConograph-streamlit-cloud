@@ -131,7 +131,8 @@ class MainClass:
             print ('save param name', param_file.name)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
-            time.sleep (0.1)
+            import params
+            print ('Circle after params save ', params.Circle)
 
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
