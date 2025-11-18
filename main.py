@@ -1,8 +1,8 @@
 import os
 import shutil
 import streamlit as st
-from dataIO import zip_folder, read_params
-from init import build_session_state
+from dataIO import zip_folder
+from init_session_state import build_session_state
 from classEBSD import EBSDClass
 
 build_session_state ()
