@@ -82,6 +82,12 @@ class MainClass:
             {'eng' : 'Upload EBSD image file',
              'jpn' : 'EBSD画像ファイル アップロード'}[lang],
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
+
+        param_file = st.file_uploader (
+                {'eng' : 'Upload parameter file (py)',
+                'jpn' : 'パラメータファイル アップロード (py)'}[lang],
+                type = ['py'], key = 'param')
+
         flg_new_file = False
         if img_file is not None:
             if st.session_state['file_name'] is not None:
@@ -90,19 +96,20 @@ class MainClass:
         
         if img_file is not None:
             st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
-        param_file = None
+        
+        #param_file = None
         flg_new_param = False
         if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
-            param_file = None
-            st.write (
-                {'eng' : 'Uploade new parameter file...',
-                 'jpn' : '新しいパラメータファイルをUploadしてください'
-                 }[lang])
+            #param_file = None
+            #st.write (
+            #    {'eng' : 'Uploade new parameter file...',
+            #     'jpn' : '新しいパラメータファイルをUploadしてください'
+            #     }[lang])
         
-            param_file = st.file_uploader (
-                {'eng' : 'Upload parameter file (py)',
-                'jpn' : 'パラメータファイル アップロード (py)'}[lang],
-                type = ['py'], key = 'param')
+            #param_file = st.file_uploader (
+            #    {'eng' : 'Upload parameter file (py)',
+            #    'jpn' : 'パラメータファイル アップロード (py)'}[lang],
+            #    type = ['py'], key = 'param')
             if param_file is not None:
                 if st.session_state['param_name'] is not None:
                     flg_new_param = st.session_state['param_name'] != param_file.name
@@ -137,7 +144,6 @@ class MainClass:
         if uploaded:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
-
 
     
     def menu_display_result_ebsd (self,):
