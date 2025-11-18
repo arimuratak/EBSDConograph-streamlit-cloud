@@ -97,29 +97,17 @@ class MainClass:
         if img_file is not None:
             st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
         
-        #param_file = None
         flg_new_param = False
-        if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
-            #param_file = None
-            #st.write (
-            #    {'eng' : 'Uploade new parameter file...',
-            #     'jpn' : '新しいパラメータファイルをUploadしてください'
-            #     }[lang])
-        
-            #param_file = st.file_uploader (
-            #    {'eng' : 'Upload parameter file (py)',
-            #    'jpn' : 'パラメータファイル アップロード (py)'}[lang],
-            #    type = ['py'], key = 'param')
-            if param_file is not None:
-                if st.session_state['param_name'] is not None:
-                    flg_new_param = st.session_state['param_name'] != param_file.name
-                else: flg_new_param = True
+        #if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
+        if param_file is not None:
+            if st.session_state['param_name'] is not None:
+                flg_new_param = st.session_state['param_name'] != param_file.name
+            else: flg_new_param = True
         
         st.write ('img file upload status {}, param file upload status {}'.format(
             img_file is not None, param_file is not None))
 
-        if (img_file is not None) and (
-            param_file is not None) and flg_new_file and flg_new_param:
+        if flg_new_file and flg_new_param:
             st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
                 st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name))
             #print (st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name)
