@@ -129,6 +129,8 @@ class MainClass:
 
             # params.pyは、同じフォルダへ保存
             print ('save param name', param_file.name)
+            if os.path.exists (self.paramsPath):
+                os.remove (self.paramsPath)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
             import params
