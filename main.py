@@ -93,6 +93,7 @@ class MainClass:
             if st.session_state['file_name'] is not None:
                 flg_new_file = st.session_state['file_name'] != img_file.name
             else: flg_new_file = True
+        print ('#1_____', st.session_state['file_name'], img_file.name, flg_new_file)
         
         if img_file is not None:
             st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
@@ -103,10 +104,12 @@ class MainClass:
             if st.session_state['param_name'] is not None:
                 flg_new_param = st.session_state['param_name'] != param_file.name
             else: flg_new_param = True
-        
+        print ('#2_____', st.session_state['param_name'], param_file.name, flg_new_param)
+
         st.write ('img file upload status {}, param file upload status {}'.format(
             img_file is not None, param_file is not None))
 
+        print ('flgs', flg_new_file, flg_new_param)
         if flg_new_file and flg_new_param:
             st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
                 st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name))
