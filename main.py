@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import streamlit as st
 from dataIO import zip_folder
@@ -130,6 +131,7 @@ class MainClass:
             print ('save param name', param_file.name)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
+            time.sleep (0.1)
 
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
