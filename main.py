@@ -10,8 +10,8 @@ if st.session_state['uploaded'] is None:
     st.session_state['uploaded'] = False
 if st.session_state['doneEBSD'] is None:
     st.session_state['doneEBSD'] = False
-if st.session_state['file_name'] is None:
-    st.session_state['file_name'] = ''
+#if st.session_state['file_name'] is None:
+#    st.session_state['file_name'] = ''
 if st.session_state['jobs_side'] is None:
     st.session_state['jobs_side'] = []
 if st.session_state['add_band'] is None:
@@ -24,8 +24,8 @@ if st.session_state['just_after_bandsearch'] is None:
     st.session_state['just_after_bandsearch'] = False
 if st.session_state['unix_time'] is None:
     st.session_state['unix_time'] = ''
-if st.session_state['param_name'] is None:
-    st.session_state['param_name'] = ''
+#if st.session_state['param_name'] is None:
+#    st.session_state['param_name'] = ''
 
 class MainClass:
     def __init__(self,):
@@ -84,7 +84,9 @@ class MainClass:
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
         flg_new_file = False
         if img_file is not None:
-            flg_new_file = st.session_state['file_name'] != img_file.name
+            if st.session_state['file_name'] is not None:
+                flg_new_file = st.session_state['file_name'] != img_file.name
+            else: flg_new_file = True
         
         param_file = None
         flg_new_param = False
@@ -100,8 +102,13 @@ class MainClass:
                 'jpn' : 'パラメータファイル アップロード (py)'}[lang],
                 type = ['py'], key = 'param')
             if param_file is not None:
-                flg_new_param = st.session_state['param_name'] != param_file.name
+                if st.session_state['param_name'] is not None:
+                    flg_new_param = st.session_state['param_name'] != param_file.name
+                else: flg_new_param = True
         
+        #st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
+        #        st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name))
+
         if (img_file is not None) and (
             param_file is not None) and flg_new_file and flg_new_param:
             st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
