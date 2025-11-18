@@ -119,10 +119,14 @@ class MainClass:
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
             uploaded = True
+            st.session_state['param_name'] = param_file.name
+            st.session_state['file_name'] = img_file.name
 
         if uploaded:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
+
+
     
     def menu_display_result_ebsd (self,):
         lang = st.session_state['lang']
