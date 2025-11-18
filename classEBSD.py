@@ -139,7 +139,16 @@ class EBSDClass:
     def display_ebsd (self, img = None, needScale = False):       
         if img is None:
             path = st.session_state['imgPath']
-            img = cv2.imread (path)
+            
+            while img is None:
+                img = cv2.imread (path)
+            
+            #if img is None:
+            #    # 少し待ってから再読み込み（Cloudで有効）
+            #    import time
+            #     time.sleep(0.1)
+            #    img = cv2.imread(path)
+            
             img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
         
         with st.container(border = True):
