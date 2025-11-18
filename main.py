@@ -88,6 +88,8 @@ class MainClass:
                 flg_new_file = st.session_state['file_name'] != img_file.name
             else: flg_new_file = True
         
+        if img_file is not None:
+            st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
         param_file = None
         flg_new_param = False
         if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
