@@ -82,34 +82,35 @@ class MainClass:
             {'eng' : 'Upload EBSD image file',
              'jpn' : 'EBSD画像ファイル アップロード'}[lang],
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
+        
+        print ('img_file is not None ?',img_file is not None)
 
         param_file = st.file_uploader (
                 {'eng' : 'Upload parameter file (py)',
                 'jpn' : 'パラメータファイル アップロード (py)'}[lang],
                 type = ['py'], key = 'param')
+        print ('param_file is not None ?',param_file is not None)
 
         flg_new_file = False
         if img_file is not None:
-            #if st.session_state['file_name'] is not None:
-            #    flg_new_file = st.session_state['file_name'] != img_file.name
-            #else: flg_new_file = True
-            flg_new_file = True
-            #print ('#1_____', st.session_state['file_name'], img_file.name, flg_new_file)
+            if st.session_state['file_name'] is not None:
+                flg_new_file = st.session_state['file_name'] != img_file.name
+            else: flg_new_file = True
+            print ('#1_____', st.session_state['file_name'], img_file.name, flg_new_file)
         
-        if img_file is not None:
-            st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
+        #if img_file is not None:
+        #    st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
         
         flg_new_param = False
         #if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
         if param_file is not None:
-            #if st.session_state['param_name'] is not None:
-            #    flg_new_param = st.session_state['param_name'] != param_file.name
-            #else: flg_new_param = True
-            flg_new_param = True
-            #print ('#2_____', st.session_state['param_name'], param_file.name, flg_new_param)
+            if st.session_state['param_name'] is not None:
+                flg_new_param = st.session_state['param_name'] != param_file.name
+            else: flg_new_param = True
+            print ('#2_____', st.session_state['param_name'], param_file.name, flg_new_param)
 
-        st.write ('img file upload status {}, param file upload status {}'.format(
-            img_file is not None, param_file is not None))
+        #st.write ('img file upload status {}, param file upload status {}'.format(
+        #    img_file is not None, param_file is not None))
 
         print ('flgs', flg_new_file, flg_new_param)
         if flg_new_file and flg_new_param:
