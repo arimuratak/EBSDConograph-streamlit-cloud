@@ -116,10 +116,12 @@ class MainClass:
             fname = img_file.name
             st.session_state['file_name'] = fname
             savePath = os.path.join (self.input, fname)
+            print ('save img name', fname)
             with open (savePath, 'wb') as f:
                 f.write (img_file.getbuffer())
 
             # params.pyは、同じフォルダへ保存
+            print ('save param name', param_file.name)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
 
