@@ -104,6 +104,9 @@ class MainClass:
         
         if (img_file is not None) and (
             param_file is not None) and flg_new_file and flg_new_param:
+            st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
+                st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name))
+            #print (st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name)
             shutil.rmtree (self.input); os.makedirs (self.input)
             # EBSD画像は、inputフォルダへ保存
             fname = img_file.name
