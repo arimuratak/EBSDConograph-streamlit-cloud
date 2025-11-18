@@ -106,8 +106,8 @@ class MainClass:
                     flg_new_param = st.session_state['param_name'] != param_file.name
                 else: flg_new_param = True
         
-        #st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
-        #        st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name))
+        st.write ('img file upload status {}, param file upload status {}'.format(
+            img_file is not None, param_file is not None))
 
         if (img_file is not None) and (
             param_file is not None) and flg_new_file and flg_new_param:
