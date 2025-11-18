@@ -32,12 +32,12 @@ if st.session_state['unix_time'] is None:
 
 class MainClass:
     def __init__(self,):
-        self.input = 'input'
-        self.filePath = 'file.py'
-        self.paramsPath = 'params.py'
-        self.path_sample = 'sample'
-        self.path_result = 'result'
-        self.path_line_visual = 'result/out.shapes.json'
+        self.input = './input'
+        self.filePath = './file.py'
+        self.paramsPath = './params.py'
+        self.path_sample = './sample'
+        self.path_result = './result'
+        self.path_line_visual = './result/out.shapes.json'
         self.H = None
         self.W = None
         

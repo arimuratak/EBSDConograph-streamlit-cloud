@@ -12,6 +12,7 @@ from skimage.io import imread, imsave
 from skimage.transform import radon, rescale
 from skimage import exposure
 import streamlit as st
+from dataIO import read_params
 
 import mask
 
@@ -632,6 +633,23 @@ def calcSigma (image, mask):
 #| バンド抽出計算
 #|
 
+def set_params (path = 'params.py'):
+    import params
+    pdict = read_params (path = path)
+    print (pdict)
+    for k, vs in pdict.items():
+        print (k, vs)
+        if k == 'PC0': params.PC0 = [float(v) for v in vs]
+        if k == 'Circle': params.Circle = bool (vs)
+        if k == 'RescaleParam': params.RescaleParam = int (vs)
+        if k == 'num_points': params.num_points = int (vs)
+        if k == 'thred': params.thred = float (vs)
+        if k == 'MinCorrelation': params.MinCorrelation = float (vs)
+        if k == 'BAND_WIDTH_MIN': params.BAND_WIDTH_MIN = float (vs)
+        if k == 'BAND_WIDTH_MAX': params.BAND_WIDTH_MAX = float (vs)
+        if k == 'dtheta': params.dtheta = float (vs)
+    return params
+
 def run():
     global PC      # project centerの座標（3次元ベクトル, スケール変換後）
     global Circle  # EBSD画像が円かどうか
@@ -650,17 +668,18 @@ def run():
         import params
         importlib.reload (file)   # file.pyの読み込み
         importlib.reload (params) # params.pyの読み込み
-        
+        #params = set_params()
+        print (type (params))
+        print (params.PC0, params.Circle)
+
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
         PC0 = params.PC0         # 下式でproject centerの座標（3次元ベクトル, スケール変換前）は求められるとする:
         Circle = params.Circle   # True: EBSD画像は円, False: 四角
-        #print (filename)
-        
-        time_st = time.time()
+        print (PC0, Circle)
+
         # 画像のリスケール
         print('Rescale image...', flush=True)
-        time_st_pr = time.time()
         image = imread(filename, as_gray=True) # 画像の読込み
         RescaleParam = params.RescaleParam / max(image.shape) # 画像のスケールを縮小するパラメータ
         image = rescale(image, scale=RescaleParam, mode='reflect') # 画像のスケールを変更

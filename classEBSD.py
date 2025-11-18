@@ -14,12 +14,12 @@ from EBSD import run, getLinesForDisplay,\
 
 class EBSDClass:
     def __init__(self,):
-        self.input = 'input'
-        self.filePath = 'file.py'
-        self.paramsPath = 'params.py'
-        self.path_sample = 'sample'
-        self.path_result = 'result'
-        self.path_line_visual = 'result/out.shapes.json'
+        self.input = './input'
+        self.filePath = './file.py'
+        self.paramsPath = './params.py'
+        self.path_sample = './sample'
+        self.path_result = './result'
+        self.path_line_visual = './result/out.shapes.json'
         self.H = None
         self.W = None
         self.cols = ['idx', 'score', 'θ', 'ρ_center', 'ρ_begin', 'ρ_end']
@@ -50,6 +50,7 @@ class EBSDClass:
             'eng' : 'Band search Run',
             'jpn' : 'バンドサーチ実行'}[lang])
         if exec:
+            print ('run executed!!!!!!!!!!')
             run ()
             st.session_state['doneEBSD'] = True
             #self.to_result_folder ()
@@ -524,4 +525,5 @@ class EBSDClass:
         
         if len (ans) > 0:
             update_params (params = ans)
+
         
