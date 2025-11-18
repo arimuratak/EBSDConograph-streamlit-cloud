@@ -2,7 +2,9 @@ import os
 import time
 import shutil
 import streamlit as st
-from dataIO import zip_folder
+import sys
+import importlib
+from dataIO import zip_folder, read_params
 from init_session_state import build_session_state
 from classEBSD import EBSDClass
 
@@ -133,8 +135,9 @@ class MainClass:
                 os.remove (self.paramsPath)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
-            import params
-            print ('Circle after params save ', params.Circle)
+            
+            params = read_params (path = self.paramsPath)
+            print ('Circle after params save ', params)
 
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)

@@ -62,7 +62,10 @@ def cvtPos (res, ax_px, ax, img_h):
         ydata *= -1
         return xdata, ydata
 
-def read_params (names, path = 'params.py'):
+def read_params (names = [
+            'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
+            'thred', 'MinCorrelation',
+            'BAND_WIDTH_MIN', 'BAND_WIDTH_MAX', 'dtheta'], path = 'params.py'):
     ans = {}
     with open (path, 'r', encoding = 'utf-8') as f:
         for line in f.readlines ():
