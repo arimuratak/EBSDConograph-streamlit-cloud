@@ -131,9 +131,9 @@ class MainClass:
 
             # params.pyは、同じフォルダへ保存
             print ('save param name', param_file.name)
-            params = read_params (path = self.paramsPath)
-            print ('Circle after params save before', params)
             if os.path.exists (self.paramsPath):
+                params = read_params (path = self.paramsPath)
+                print ('Circle after params save before', params)
                 os.remove (self.paramsPath)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
