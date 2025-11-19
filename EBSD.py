@@ -669,8 +669,10 @@ def run():
         importlib.reload (file)   # file.pyの読み込み
         importlib.reload (params) # params.pyの読み込み
         #params = set_params()
-        print (type (params))
-        print (params.PC0, params.Circle)
+        #print (type (params))
+        #print (params.PC0, params.Circle)
+        print ('!!!!!!!!params in EBSD.py!!!!!!!!!!!')
+        print (read_params('params.py'))
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
