@@ -672,7 +672,7 @@ def run():
         #print (type (params))
         #print (params.PC0, params.Circle)
         print ('!!!!!!!!params in EBSD.py!!!!!!!!!!!')
-        print (read_params('params.py'))
+        print (read_params('./params.py'))
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
