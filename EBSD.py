@@ -16,7 +16,7 @@ from dataIO import read_params
 
 import mask
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+#os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # (rho, theta)に対応する直線の、画像上の端点を算出．mask.pyのgetLine関数と基本的に同じだが、
 # Plotする際は、(x,y) -> (y-image_shape[0]+1, x)の座標変換が必要．
