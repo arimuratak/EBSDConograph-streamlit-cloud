@@ -102,7 +102,7 @@ def update_params (params : dict, path = 'params.py'):
 
 def read_params_import_bandsearch ():
     import params
-    importlib.reload (params)
+    #importlib.reload (params)
 
     ans = {'PC0' : params.PC0, 'Circle' : params.Circle,
            'RescaleParam' : params.RescaleParam, 'deg' : params.deg,
