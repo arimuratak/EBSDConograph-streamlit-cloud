@@ -12,7 +12,7 @@ from skimage.io import imread, imsave
 from skimage.transform import radon, rescale
 from skimage import exposure
 import streamlit as st
-#from dataIO import read_params
+from dataIO import read_params
 
 import mask
 
@@ -668,12 +668,17 @@ def run():
         import params
         importlib.reload (file)   # file.pyの読み込み
         importlib.reload (params) # params.pyの読み込み
+        ppath = './params.py'
+        if os.path.exists (ppath):
+            print ('params before import')
+            ps = read_params (path = ppath)
+            print (ps)
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
         PC0 = params.PC0         # 下式でproject centerの座標（3次元ベクトル, スケール変換前）は求められるとする:
         Circle = params.Circle   # True: EBSD画像は円, False: 四角
-        
+        print (PC0, Circle)
         # 画像のリスケール
         print('Rescale image...', flush=True)
         image = imread(filename, as_gray=True) # 画像の読込み
