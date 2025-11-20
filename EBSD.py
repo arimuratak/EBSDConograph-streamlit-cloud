@@ -259,8 +259,8 @@ def searchBand(rhos, # rho values
                image_shape, PC,
                BandKukans): # Output
     #import ebsd
-    #import params
-    params = set_params()
+    import params
+    #params = set_params()
     BandKukans.clear()
     # Returns an empty BandKukan if ArrayDeriv2 is empty.
     if len(ArrayDeriv2) < 1:
@@ -665,10 +665,10 @@ def run():
     try:
         import file
         #import ebsd
-        #import params
+        import params
         importlib.reload (file)   # file.pyの読み込み
-        params = set_params ()
-        #importlib.reload (params) # params.pyの読み込み
+        #params = set_params ()
+        importlib.reload (params) # params.pyの読み込み
         ppath = './params.py'
         if os.path.exists (ppath):
             print ('params before run')
@@ -851,8 +851,8 @@ def editBandCenter(rho, i):
 #| BandKukans内にバンド(バンドセンター: theta, rho)が存在すればそれを返す。なければNone。
 #|
 def find(theta, rho, BandKukans):
-    #import params
-    params = set_params()
+    import params
+    #params = set_params()
     for b in BandKukans:
         match_theta = isEqualTheta(theta, b.putTheta(), params.dtheta)
         if abs(theta - b.putTheta()) > 90.:
@@ -868,8 +868,8 @@ def find(theta, rho, BandKukans):
 #| BandKukans内に同じバンドが存在すればそれを返す。なければNone。
 #|
 def findBand(band, BandKukans):
-    #import params
-    params = set_params()
+    import params
+    #params = set_params()
     for b in BandKukans:
         match_theta = isEqualTheta(band.putTheta(), b.putTheta(), params.dtheta)
         ranges1 = band.putEdgeRanges()
@@ -1008,8 +1008,8 @@ def addBand_theta_edges(targetTheta, rhomin, rhomax):
 #|
 def getCrossing(band1, band2):
     global Circle, shape
-    #import params
-    params = set_params()
+    import params
+    #params = set_params()
     rho1, theta1 = band1.center_rt
     rho2, theta2 = band2.center_rt
     # 角度が同じだと交点がないのでNoneを返す
@@ -1083,8 +1083,8 @@ def addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, MinCorrelat
 
 def addBandsFrom4Bands():
     global BandKukans
-    #import params
-    params = set_params()
+    import params
+    #params = set_params()
     newBands = []
     addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, params.MinCorrelation, newBands)
     BandKukans.extend(newBands)
