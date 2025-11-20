@@ -7,7 +7,8 @@ import cv2
 import matplotlib.pyplot as plt
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
-from dataIO import fig2img, cvtPos, read_params, update_params
+from dataIO import fig2img, cvtPos,\
+    read_params_import_bandsearch, update_params, read_params
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
         addBand_theta_edges, addBand_theta_rho
@@ -507,8 +508,9 @@ class EBSDClass:
     
     def params_menu (self,):
         lang = st.session_state['lang']
-        params = read_params (self.param_names,
-                            path = self.paramsPath)
+        #params = read_params (self.param_names,
+        #                    path = self.paramsPath)
+        params = read_params_import_bandsearch ()
         
         ans = {}
         with st.expander (
@@ -524,6 +526,8 @@ class EBSDClass:
                     with col2:
                         ans[name] = self.param_uniq (params, name)
         
+        print ('in params_menu ans')
+        print (ans)
         #if len (ans) > 0:
         #    update_params (params = ans, path = self.paramsPath)
 

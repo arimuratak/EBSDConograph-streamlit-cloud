@@ -100,6 +100,20 @@ def update_params (params : dict, path = 'params.py'):
     with open (path, 'w', encoding = 'utf-8') as f:
         f.write (ans)
 
+def read_params_import_bandsearch ():
+    import params
+    importlib.reload (params)
+
+    ans = {'PC0' : params.PC0, 'Circle' : params.Circle,
+           'RescaleParam' : params.RescaleParam, 'deg' : params.deg,
+           'num_points' : params.num_points, 'thred' : params.thred,
+           'MinCorrelation' : params.MinCorrelation,
+           'BAND_WIDTH_MIN' : params.BAND_WIDTH_MIN,
+           'BAND_WIDTH_MAX' : params.BAND_WIDTH_MAX,
+           'dtheta' : params.dtheta}
+
+    return ans
+
 
 if __name__ == '__main__':
     names = [
