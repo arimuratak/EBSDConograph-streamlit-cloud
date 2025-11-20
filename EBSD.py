@@ -12,7 +12,7 @@ from skimage.io import imread, imsave
 from skimage.transform import radon, rescale
 from skimage import exposure
 import streamlit as st
-from dataIO import read_params
+#from dataIO import read_params
 
 import mask
 
@@ -633,7 +633,7 @@ def calcSigma (image, mask):
 #| バンド抽出計算
 #|
 
-def set_params (path = 'params.py'):
+"""def set_params (path = 'params.py'):
     import params
     pdict = read_params (path = path)
     print (pdict)
@@ -648,7 +648,7 @@ def set_params (path = 'params.py'):
         if k == 'BAND_WIDTH_MIN': params.BAND_WIDTH_MIN = float (vs)
         if k == 'BAND_WIDTH_MAX': params.BAND_WIDTH_MAX = float (vs)
         if k == 'dtheta': params.dtheta = float (vs)
-    return params
+    return params"""
 
 def run():
     global PC      # project centerの座標（3次元ベクトル, スケール変換後）
@@ -663,29 +663,17 @@ def run():
     global BAND_WIDTH_MAX
 
     try:
-        print ('!!!!!!!!params in EBSD.py!!!!!!!!!!!')
-        ppath = './params.py'
-        print (os.path.abspath(__file__))
-        print (os.getcwd())
-        if os.path.exists (ppath):
-            ps = read_params(path = ppath)
-            print (ps)
         import file
         #import ebsd
         import params
         importlib.reload (file)   # file.pyの読み込み
         importlib.reload (params) # params.pyの読み込み
-        #params = set_params()
-        #print (type (params))
-        #print (params.PC0, params.Circle)
-        
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
         PC0 = params.PC0         # 下式でproject centerの座標（3次元ベクトル, スケール変換前）は求められるとする:
         Circle = params.Circle   # True: EBSD画像は円, False: 四角
-        print (PC0, Circle)
-
+        
         # 画像のリスケール
         print('Rescale image...', flush=True)
         image = imread(filename, as_gray=True) # 画像の読込み

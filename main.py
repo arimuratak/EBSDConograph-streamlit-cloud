@@ -86,23 +86,16 @@ class MainClass:
              'jpn' : 'EBSD画像ファイル アップロード'}[lang],
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
         
-        print ('img_file is not None ?',img_file is not None)
-
         param_file = st.file_uploader (
                 {'eng' : 'Upload parameter file (py)',
                 'jpn' : 'パラメータファイル アップロード (py)'}[lang],
                 type = ['py'], key = 'param')
-        print ('param_file is not None ?',param_file is not None)
-
+        
         flg_new_file = False
         if img_file is not None:
             if st.session_state['file_name'] is not None:
                 flg_new_file = st.session_state['file_name'] != img_file.name
             else: flg_new_file = True
-            print ('#1_____', st.session_state['file_name'], img_file.name, flg_new_file)
-        
-        #if img_file is not None:
-        #    st.write ('img file upload status {}, {}, {}'.format (img_file is not None, st.session_state['file_name'], img_file.name))
         
         flg_new_param = False
         #if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
@@ -110,37 +103,23 @@ class MainClass:
             if st.session_state['param_name'] is not None:
                 flg_new_param = st.session_state['param_name'] != param_file.name
             else: flg_new_param = True
-            print ('#2_____', st.session_state['param_name'], param_file.name, flg_new_param)
-
-        #st.write ('img file upload status {}, param file upload status {}'.format(
-        #    img_file is not None, param_file is not None))
-
-        print ('flgs', flg_new_file, flg_new_param)
+        
+        
         if flg_new_file and flg_new_param:
-            st.write ('old img file {}, new img file {}, old param file {}, new param file {}'.format(
-                st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name))
-            #print (st.session_state['file_name'], img_file.name, st.session_state['param_name'], param_file.name)
             shutil.rmtree (self.input); os.makedirs (self.input)
             # EBSD画像は、inputフォルダへ保存
             fname = img_file.name
             st.session_state['file_name'] = fname
             savePath = os.path.join (self.input, fname)
-            print ('save img name', fname)
             with open (savePath, 'wb') as f:
                 f.write (img_file.getbuffer())
 
             # params.pyは、同じフォルダへ保存
-            print ('save param name', param_file.name)
             if os.path.exists (self.paramsPath):
-                params = read_params (path = self.paramsPath)
-                print ('Circle after params save before', params)
                 os.remove (self.paramsPath)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
             
-            params = read_params (path = self.paramsPath)
-            print ('Circle after params save after', params)
-
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
             uploaded = True
@@ -189,9 +168,6 @@ class MainClass:
         return menuList    
 
 if __name__ == '__main__':
-    print ('!!!!!!!!work in main.py!!!!!!!!!!!')
-    print (os.path.abspath(__file__))
-    print (os.getcwd())
     title = 'EBSD Conograph'
     objMain = MainClass ()
     objEBSD = EBSDClass ()
@@ -257,10 +233,6 @@ if __name__ == '__main__':
     if len (menuList) > 0:
 
         with img_disp.container():
-            #menu = st.radio (
-            #    {'eng' : 'Select display', 'jpn' : '表示画像選択'}[lang],
-            #    menuList, horizontal = True,
-            #    index = st.session_state['radio_index'])
             menu_tabs = st.tabs (menuList)
 
             for tab, tab_name in zip (menu_tabs, menuList):
