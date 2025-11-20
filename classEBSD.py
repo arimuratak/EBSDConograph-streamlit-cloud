@@ -485,6 +485,7 @@ class EBSDClass:
         st.session_state['params'] = params
 
     def param_PC0 (self, params):
+        param_name = st.session_state['param_name']
         PC0 = params['PC0']
         col0, col1, col2, col3 = st.columns (4)
         with col0: st.write ('PC0')
@@ -492,7 +493,7 @@ class EBSDClass:
         for i, (pc, col) in enumerate (
                                 zip (PC0, [col1, col2, col3])):
             with col:
-                key = 'PC0_{}'.format(i)
+                key = 'PC0_{}_{}'.format(i, param_name) 
                 pc = st.text_input (
                         key, PC0[i], key = key,
                         label_visibility = 'hidden')
@@ -501,9 +502,10 @@ class EBSDClass:
         return ans
 
     def param_uniq (self, params, name = 'Circle'):
+        param_name = st.session_state['param_name']
         vstr = str (params[name])
         if name == 'Circle': name += ' (True / False)'
-        ans = st.text_input (name, vstr, key = name)
+        ans = st.text_input (name, vstr, key = name + param_name)
         return ans
     
     def params_menu (self,):
@@ -522,7 +524,6 @@ class EBSDClass:
             ans['PC0'] = self.param_PC0 (params)
             col1, col2 = st.columns (2)
             for i, name in enumerate (self.param_names[1:]):
-                name += param_name
                 if i % 2 == 0:
                     with col1:
                         ans[name] = self.param_uniq (params, name)
