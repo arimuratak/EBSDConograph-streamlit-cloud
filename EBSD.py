@@ -669,11 +669,11 @@ def run():
         importlib.reload (file)   # file.pyの読み込み
         params = set_params ()
         #importlib.reload (params) # params.pyの読み込み
-        #ppath = './params.py'
-        #if os.path.exists (ppath):
-        #    print ('params before import')
-        #    ps = read_params (path = ppath)
-        #    print (ps)
+        ppath = './params.py'
+        if os.path.exists (ppath):
+            print ('params before run')
+            ps = read_params (path = ppath)
+            print (ps)
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
