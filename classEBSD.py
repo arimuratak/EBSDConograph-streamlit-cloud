@@ -507,7 +507,8 @@ class EBSDClass:
     
     def params_menu (self,):
         lang = st.session_state['lang']
-        params = read_params (self.param_names)
+        params = read_params (self.param_names,
+                            path = self.paramsPath)
         
         ans = {}
         with st.expander (
@@ -524,6 +525,6 @@ class EBSDClass:
                         ans[name] = self.param_uniq (params, name)
         
         if len (ans) > 0:
-            update_params (params = ans)
+            update_params (params = ans, path = self.paramsPath)
 
         
