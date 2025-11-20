@@ -524,7 +524,7 @@ class EBSDClass:
                     with col2:
                         ans[name] = self.param_uniq (params, name)
         
-        if len (ans) > 0:
-            update_params (params = ans, path = self.paramsPath)
+        #if len (ans) > 0:
+        #    update_params (params = ans, path = self.paramsPath)
 
         
