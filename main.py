@@ -5,6 +5,7 @@ import streamlit as st
 from dataIO import zip_folder
 from init_session_state import build_session_state
 from classEBSD import EBSDClass
+from dataIO import read_params
 
 build_session_state ()
 if st.session_state['uploaded'] is None:
@@ -117,6 +118,9 @@ class MainClass:
                 os.remove (self.paramsPath)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
+            print ('new saved params')
+            params = read_params (path = self.paramsPath)
+            print (params)
             
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
