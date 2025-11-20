@@ -663,6 +663,13 @@ def run():
     global BAND_WIDTH_MAX
 
     try:
+        print ('!!!!!!!!params in EBSD.py!!!!!!!!!!!')
+        ppath = './params.py'
+        print (os.path.abspath(__file__))
+        print (os.getcwd())
+        if os.path.exists (ppath):
+            ps = read_params(path = ppath)
+            print (ps)
         import file
         #import ebsd
         import params
@@ -671,8 +678,7 @@ def run():
         #params = set_params()
         #print (type (params))
         #print (params.PC0, params.Circle)
-        print ('!!!!!!!!params in EBSD.py!!!!!!!!!!!')
-        print (read_params('./params.py'))
+        
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 

@@ -189,6 +189,9 @@ class MainClass:
         return menuList    
 
 if __name__ == '__main__':
+    print ('!!!!!!!!work in main.py!!!!!!!!!!!')
+    print (os.path.abspath(__file__))
+    print (os.getcwd())
     title = 'EBSD Conograph'
     objMain = MainClass ()
     objEBSD = EBSDClass ()
@@ -235,7 +238,7 @@ if __name__ == '__main__':
                     #if job_name in ['Upload files','ファイルアップロード']:
                     #    _ = objMain.upload_files ()
                     if job_name in ['Bandsearch','バンドサーチ']:
-                        objEBSD.params_menu ()
+                        #objEBSD.params_menu ()
                         objEBSD.run_band_search ()
 
                         edit_area = st.empty ()
