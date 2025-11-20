@@ -2,9 +2,7 @@ import os
 import time
 import shutil
 import streamlit as st
-import sys
-import importlib
-from dataIO import zip_folder, read_params
+from dataIO import zip_folder
 from init_session_state import build_session_state
 from classEBSD import EBSDClass
 
@@ -214,7 +212,7 @@ if __name__ == '__main__':
                     #if job_name in ['Upload files','ファイルアップロード']:
                     #    _ = objMain.upload_files ()
                     if job_name in ['Bandsearch','バンドサーチ']:
-                        #objEBSD.params_menu ()
+                        objEBSD.params_menu ()
                         objEBSD.run_band_search ()
 
                         edit_area = st.empty ()
