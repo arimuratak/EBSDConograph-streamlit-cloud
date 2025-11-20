@@ -510,12 +510,8 @@ class EBSDClass:
     
     def params_menu (self,):
         lang = st.session_state['lang']
-        param_name = st.session_state['param_name']
         params = read_params (self.param_names,
                             path = self.paramsPath)
-        #params = read_params_import_bandsearch ()
-        print ('read params in params_menu')
-        print (params)
 
         ans = {}
         with st.expander (
@@ -531,9 +527,7 @@ class EBSDClass:
                     with col2:
                         ans[name] = self.param_uniq (params, name)
         
-        print ('in params_menu ans')
-        print (ans)
-        #if len (ans) > 0:
-        #    update_params (params = ans, path = self.paramsPath)
+        if len (ans) > 0:
+            update_params (params = ans, path = self.paramsPath)
 
         
