@@ -259,7 +259,8 @@ def searchBand(rhos, # rho values
                image_shape, PC,
                BandKukans): # Output
     #import ebsd
-    import params
+    #import params
+    params = set_params()
     BandKukans.clear()
     # Returns an empty BandKukan if ArrayDeriv2 is empty.
     if len(ArrayDeriv2) < 1:
@@ -633,14 +634,13 @@ def calcSigma (image, mask):
 #| バンド抽出計算
 #|
 
-"""def set_params (path = 'params.py'):
+def set_params (path = './params.py'):
     import params
     pdict = read_params (path = path)
-    print (pdict)
+    
     for k, vs in pdict.items():
-        print (k, vs)
         if k == 'PC0': params.PC0 = [float(v) for v in vs]
-        if k == 'Circle': params.Circle = bool (vs)
+        if k == 'Circle': params.Circle = {'False':False, 'True' : True}[vs]
         if k == 'RescaleParam': params.RescaleParam = int (vs)
         if k == 'num_points': params.num_points = int (vs)
         if k == 'thred': params.thred = float (vs)
@@ -648,7 +648,7 @@ def calcSigma (image, mask):
         if k == 'BAND_WIDTH_MIN': params.BAND_WIDTH_MIN = float (vs)
         if k == 'BAND_WIDTH_MAX': params.BAND_WIDTH_MAX = float (vs)
         if k == 'dtheta': params.dtheta = float (vs)
-    return params"""
+    return params
 
 def run():
     global PC      # project centerの座標（3次元ベクトル, スケール変換後）
@@ -665,14 +665,15 @@ def run():
     try:
         import file
         #import ebsd
-        import params
+        #import params
         importlib.reload (file)   # file.pyの読み込み
-        importlib.reload (params) # params.pyの読み込み
-        ppath = './params.py'
-        if os.path.exists (ppath):
-            print ('params before import')
-            ps = read_params (path = ppath)
-            print (ps)
+        params = set_params ()
+        #importlib.reload (params) # params.pyの読み込み
+        #ppath = './params.py'
+        #if os.path.exists (ppath):
+        #    print ('params before import')
+        #    ps = read_params (path = ppath)
+        #    print (ps)
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
@@ -850,7 +851,8 @@ def editBandCenter(rho, i):
 #| BandKukans内にバンド(バンドセンター: theta, rho)が存在すればそれを返す。なければNone。
 #|
 def find(theta, rho, BandKukans):
-    import params
+    #import params
+    params = set_params()
     for b in BandKukans:
         match_theta = isEqualTheta(theta, b.putTheta(), params.dtheta)
         if abs(theta - b.putTheta()) > 90.:
@@ -866,7 +868,8 @@ def find(theta, rho, BandKukans):
 #| BandKukans内に同じバンドが存在すればそれを返す。なければNone。
 #|
 def findBand(band, BandKukans):
-    import params
+    #import params
+    params = set_params()
     for b in BandKukans:
         match_theta = isEqualTheta(band.putTheta(), b.putTheta(), params.dtheta)
         ranges1 = band.putEdgeRanges()
@@ -1005,7 +1008,8 @@ def addBand_theta_edges(targetTheta, rhomin, rhomax):
 #|
 def getCrossing(band1, band2):
     global Circle, shape
-    import params
+    #import params
+    params = set_params()
     rho1, theta1 = band1.center_rt
     rho2, theta2 = band2.center_rt
     # 角度が同じだと交点がないのでNoneを返す
@@ -1079,7 +1083,8 @@ def addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, MinCorrelat
 
 def addBandsFrom4Bands():
     global BandKukans
-    import params
+    #import params
+    params = set_params()
     newBands = []
     addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, params.MinCorrelation, newBands)
     BandKukans.extend(newBands)
