@@ -508,10 +508,12 @@ class EBSDClass:
     
     def params_menu (self,):
         lang = st.session_state['lang']
-        #params = read_params (self.param_names,
-        #                    path = self.paramsPath)
-        params = read_params_import_bandsearch ()
-        
+        params = read_params (self.param_names,
+                            path = self.paramsPath)
+        #params = read_params_import_bandsearch ()
+        print ('read params in params_menu')
+        print (params)
+
         ans = {}
         with st.expander (
             {'eng' : 'Parameter menu',
