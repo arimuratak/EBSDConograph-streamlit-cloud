@@ -1,8 +1,9 @@
 import os
 import io
-import importlib
+import re
 import zipfile
 from PIL import Image
+import pandas as pd
 
 def zip_folder(folder_path):
     zip_buffer = io.BytesIO()
@@ -72,9 +73,9 @@ def read_params (names = [
             if ('=' in line) & (line.split ('=')[0].strip() in names):
                 line = line.split('#')[0].split ('=')
                 name = line[0].strip()
-                vstr = line[1].strip()
+                vstr = line[1].strip().strip ("'")
 
-                if name == 'PC0':
+                if name in ['PC0', 'ref_shift_dXdYdZ']:
                     vstr = vstr.strip('[').strip(']').split (',')
                     vstr = [v.strip() for v in vstr]
                     
@@ -114,12 +115,134 @@ def read_params_import_bandsearch ():
 
     return ans
 
+def to_params_conograph (readPath, savePath):
+    namesDict  = {
+        'use_band_width' : '# use only band centers : 0, use band width : 1 ',
+        'searchLevel' : '# 0:quick search, 1:exhaustive search',
+        'range_deg' : '# The input phi, sigma are supposed to contain errors within this range (degree).',
+        'tolerance_unit_cell' : '# The unit-cell scales s1, s2 computed from band widths are supposed to equal,\n# if both of s1 <= s2*(this.value) and s2 <= s1*(this.value) hold.',
+        'tolerance_vector_length_gain' : '# (Used only for Bravais lattice determination and selection of output solutions when there are very similar solutions)\n# lattice-vector lengths d1, d2 are considered to equal, if d1 <= d2*(1+ this.value) and d2 <= d1*(1+ this.value) hold.',
+        'tolerance_vector_length' : '# (Used only for selecting output solutions when there are very similar ones)\n#  lattice-vector lengths d1, d2 are considered to equal, if d1 <= d2*(1+ this.value) and d2 <= d1*(1+ this.value) hold.',
+        'num_miller_idx' : '# The number of the Miller indices generated for computation of the figure of merit M.',
+        'th_hkl' : '# The upper threshold for the absolute values |h|, |k|, |l| of the Miller indices generated for computation of the figure of merit M.',
+        'ref_shift_dXdYdZ' : '# Refine the pattern center shift DeltaX, DeltaY, DeltaZ? (Z: the direction perpendicular to the screen)\n# (No: 0, Yes: 1)',
+        'th_fm' : '# Only the solution with the figure of merit larger than this value is output.',
+        'axisRhombohedralSym' : '# Axis for rhombohedral symmetry (“Rhombohedral” or “Hexagonal”)',
+        'axisMonoclinicSym' : '# Axis for monoclinic symmetry ("A", "B", or "C")',
+        'latexStyle' : '# Output in latex style (0:no, 1:yes (for journal writing))'}
+    names = list (namesDict.keys())
+    params = read_params (names, readPath)
+    use_band_width = None
+    ans = []
+    for k, v in params.items():
+        comment = namesDict[k]
+        if k == 'use_band_width':
+            use_band_width = int (v == '1')
+        elif k == 'ref_shift_dXdYdZ':
+            v = '          '.join (v)
+            ans.append (comment + '\n' + v + '\n')
+        elif k == 'axisRhombohedralSym':
+            v = '      ' + v.strip("'")
+            ans.append (comment + '\n' + v + '\n')
+        elif k in ['axisMonoclinicSym', 'latexStyle']:
+            v = '              ' + v
+            ans.append (comment + '\n' + v + '\n')
+        else:
+            ans.append (comment + '\n' + v + '\n')
+    ans = '\n'.join (ans)
+    with open (savePath, 'w', encoding = 'utf-8') as f:
+        f.write (ans)
+    return params, use_band_width
+
+def read_kikuchi_radius (path):
+    f = open (path, 'r', encoding = 'utf-8')
+    line = list (f.readlines())[1]
+    f.close()
+    value = re.findall(r"\d+\.\d+", line)[0]
+    return value
+
+def read_cono_summary (path = 'result/out.txt'):
+    ans = {}
+    with open (path, 'r', encoding = 'utf-8') as f:
+        lines = [line.strip() for line in list (f.readlines())[7:21]]
+    
+    for line in lines:
+        lattice = line.split (' ')[1]
+        ans[lattice] = line
+    return ans
+
+def put_separate (text):
+    return re.sub(r'(?<=\d)\s+(?=[\-\d])', ', ', text)
+
+def read_out_file(path):
+    lattice = None
+    candNo = None
+    ans = {}
+    ans['rad_kikuchi'] = read_kikuchi_radius (path)
+    ans['summary'] = read_cono_summary (path)
+    
+    with open(path, 'r' ,encoding = 'utf-8') as f:
+        lines = [line.strip() for line in f.readlines()]
+
+    while len (lines) > 0:
+        line = lines.pop (0)
+        if '### Candidates for' in line:
+            lattice = line.split()[-2]
+            ans[lattice] = {}
+        elif ('###' in line) & ('No.' in line):
+            candNo = 'Candidate No. ' + re.findall (r'\d+', line)[0]
+            ans[lattice][candNo] = {}
+        elif '# a : b : c  alpha  beta  gamma (degree) scale_factor (before refinement)' in line:
+            ans[lattice][candNo]['lattice_const_before_refinement'] = put_separate (lines.pop(0))
+        elif '# a : b : c  alpha  beta  gamma (degree) scale_factor, a/c, b/c (after refinement)' in line:
+            ans[lattice][candNo]['lattice_const_after_refinement'] = put_separate (lines.pop(0))
+        elif '# propagation errors when the errors of the input angles are assumed to be within 1 deg.' in line:
+            ans[lattice][candNo]['propagation_errors'] = put_separate (lines.pop (0))
+        elif '# Buerger-reduced reciprocal_lattice basis (before refinement)' in line:
+            v1 = put_separate (lines.pop(0))
+            v2 = put_separate (lines.pop(0))
+            v3 = put_separate (lines.pop(0))
+            ans[lattice][candNo]['Buerger_lattice_basis_before_refinement'] = [v1, v2, v3]
+        elif '# Buerger-reduced reciprocal_lattice basis, propagation errors  (after refinement)' in line:
+            v1 = put_separate (lines.pop(0))
+            v2 = put_separate (lines.pop(0))
+            v3 = put_separate (lines.pop(0))
+            ans[lattice][candNo]['Buerger_lattice_basis_after_refinement'] = [v1, v2, v3]
+        elif '# Euler angles: theta1, theta2, theta3, Error_theta1, Error_theta2, Error_theta3 (deg) (after refinement)' in line:
+            ans[lattice][candNo]['euler_angles'] = put_separate (lines.pop(0))
+        elif '# Projection center shifts: Delta_x, Delta_y, Delta_z, Error_Delta_x, Error_Delta_y, Error_Delta_z,' in line:
+            ans[lattice][candNo]['projection_center_shifts'] = put_separate (lines.pop (0))
+        elif '# Number of computed bands' in line:
+            ans[lattice][candNo]['num_bands'] = put_separate (lines.pop(0))
+        elif '# Figure of merit at the beginning and the end of the refinement' in line:
+            ans[lattice][candNo]['figure_of_merit'] = put_separate (lines.pop(0))
+        elif '# Chi-squares at the beginning and the end of the refinement' in line:
+            ans[lattice][candNo]['chi_squares'] = put_separate (lines.pop(0))
+        elif '# Indexing with the parameters before refinement' in line:
+            colsLine = lines.pop(0).strip('#').strip()
+            vsList = [colsLine]
+            while True:
+                if ('#' in lines[0]) | (lines[0] == ''):
+                    break
+                vsList.append (put_separate (lines.pop(0)))
+            ans[lattice][candNo]['indexing_before_refinement'] = vsList
+        elif '# Indexing with the parameters after refinement' in line:
+            colsLine = lines.pop(0).strip('#').strip()
+            vsList = [colsLine]
+            while True:
+                if ('#' in lines[0]) | (lines[0] == ''):
+                    break
+                vsList.append (put_separate (lines.pop(0)))
+            ans[lattice][candNo]['indexing_after_refinement'] = vsList
+
+    return ans
 
 if __name__ == '__main__':
-    names = [
-            'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
-            'thred', 'MinCorrelation',
-            'BAND_WIDTH_MIN', 'BAND_WIDTH_MAX', 'dtheta']
-    ans = read_params (names)
-    print (ans)
-
+    """path = 'result/out.txt'
+    ans = read_out_file (path)
+    print (ans['rad_kikuchi'])
+    print (ans['summary'])
+    print (ans['Monoclinic(C)'])"""
+    text = ' a1 = (   -0.8376    0.2598   -0.7413) (    0.0295    0.0572    0.0253)'
+    text = '    0.9630    0.9931    1.1949   97.9890  106.8678  108.8798      0.0000'
+    print (put_separate (text))

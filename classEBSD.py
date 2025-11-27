@@ -7,8 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
-from dataIO import fig2img, cvtPos,\
-    read_params_import_bandsearch, update_params, read_params
+from dataIO import fig2img, cvtPos, update_params, read_params
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
         addBand_theta_edges, addBand_theta_rho
@@ -51,16 +50,13 @@ class EBSDClass:
             'eng' : 'Band search Run',
             'jpn' : 'バンドサーチ実行'}[lang])
         if exec:
-            print ('run executed!!!!!!!!!!')
             run ()
+            #st.session_state['uploaded'] = False
             st.session_state['doneEBSD'] = True
-            #self.to_result_folder ()
-            st.session_state['uploaded'] = False
-            st.session_state['doneEBSD'] = True
+            st.session_state['doneCono'] = False
             df = self.get_lines_for_display ()
             st.session_state['lines_for_display'] = df
-            st.session_state['just_after_bandsearch'] = True
-        
+            st.session_state['just_after_bandsearch'] = True        
 
     def get_lines (self,):
         with open (self.path_line_visual, 'r', encoding = 'utf-8') as f:
@@ -145,12 +141,6 @@ class EBSDClass:
             while img is None:
                 img = cv2.imread (path)
             
-            #if img is None:
-            #    # 少し待ってから再読み込み（Cloudで有効）
-            #    import time
-            #     time.sleep(0.1)
-            #    img = cv2.imread(path)
-            
             img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
         
         with st.container(border = True):
@@ -158,12 +148,6 @@ class EBSDClass:
                 st.pyplot (img)
             else:
                 st.image (img)
-
-    #def put_line (self, img, xys, color = (0,0,255)):
-    #    xy1, xy2 = xys
-    #    cv2.line (img, tuple (xy1), tuple (xy2),
-    #              thickness = 1, color = color,
-    #              lineType = cv2.LINE_AA)
 
     def put_line_index (self, img, xys, idx):
         H, W, _ = img.shape

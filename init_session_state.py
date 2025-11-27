@@ -11,6 +11,8 @@ def build_session_state ():
         st.session_state['uploaded'] = None
     if 'doneEBSD' not in st.session_state:
         st.session_state['doneEBSD'] = None
+    if 'doneCono' not in st.session_state:
+        st.session_state['doneCono'] = None
     if 'imgPath' not in st.session_state:
         st.session_state['imgPath'] = None
     if 'ebsd_sels' not in st.session_state:
@@ -47,3 +49,7 @@ def build_session_state ():
         st.session_state['unix_time'] = None
     if 'param_name' not in st.session_state:
         st.session_state['param_name'] = None
+    if 'xydata' not in st.session_state:
+        st.session_state['xydata'] = None
+    if 'res_clicked' not in st.session_state:
+        st.session_state['res_clicked'] = None

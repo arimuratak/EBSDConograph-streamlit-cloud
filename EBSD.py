@@ -669,17 +669,12 @@ def run():
         importlib.reload (file)   # file.pyの読み込み
         #params = set_params ()
         importlib.reload (params) # params.pyの読み込み
-        ppath = './params.py'
-        if os.path.exists (ppath):
-            print ('params before run')
-            ps = read_params (path = ppath)
-            print (ps)
 
         # 入力ファイル指定
         filename = file.path     # EBSD画像ファイルの　path 
         PC0 = params.PC0         # 下式でproject centerの座標（3次元ベクトル, スケール変換前）は求められるとする:
         Circle = params.Circle   # True: EBSD画像は円, False: 四角
-        print (PC0, Circle)
+        #print (PC0, Circle)
         # 画像のリスケール
         print('Rescale image...', flush=True)
         image = imread(filename, as_gray=True) # 画像の読込み
@@ -751,8 +746,6 @@ def run():
                 ArrayDeriv2[n][k] = coef3[1]*2.0
                 ArrayDeriv1[n][k] = coef3[2]
                 ArraySmth[n][k] = coef3[3]
-        time_ed_pr = time.time()
-        #print ('time for preprocess {} sec'.format (time_ed_pr - time_st_pr))
         imsave('result/out.1st_derivative.png', exposure.rescale_intensity(ArrayDeriv1, in_range='image', out_range='uint8').astype(np.uint8))
         imsave('result/out.2nd_derivative.png', exposure.rescale_intensity(ArrayDeriv2, in_range='image', out_range='uint8').astype(np.uint8))
         imsave(name_ArrayDeriv2, ArrayDeriv2)
@@ -777,7 +770,6 @@ def run():
         # バンド抽出
         print('Search bands...', flush=True)
         BandKukans = []
-        time_st_bs = time.time()
         searchBand(rhos, thetas, ArrayDeriv2, ArraySinogramErrors    , 
                    image.shape, PC, BandKukans    )
         print(f'  bands: {len(BandKukans)} => ', end='', flush=True)
@@ -786,7 +778,6 @@ def run():
         
         print(len(BandKukans), flush=True)
         BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
-        time_ed_bs = time.time()
         #print ('\ntime for band search {} sec'.format(time_ed_bs - time_st_bs))
         # iter = 0
         # while iter < 1 and params.GenerateBandsFromBands and len(BandKukans) < params.NumberOfBands:

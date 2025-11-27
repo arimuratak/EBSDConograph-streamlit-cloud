@@ -5,6 +5,7 @@ import streamlit as st
 from dataIO import zip_folder
 from init_session_state import build_session_state
 from classEBSD import EBSDClass
+from classConograph import Conograph
 from dataIO import read_params
 
 build_session_state ()
@@ -12,6 +13,8 @@ if st.session_state['uploaded'] is None:
     st.session_state['uploaded'] = False
 if st.session_state['doneEBSD'] is None:
     st.session_state['doneEBSD'] = False
+if st.session_state['doneCono'] is None:
+    st.session_state['doneCono'] = False
 #if st.session_state['file_name'] is None:
 #    st.session_state['file_name'] = ''
 if st.session_state['jobs_side'] is None:
@@ -118,9 +121,6 @@ class MainClass:
                 os.remove (self.paramsPath)
             with open (self.paramsPath, 'wb') as f:
                 f.write (param_file.getbuffer())
-            print ('new saved params')
-            params = read_params (path = self.paramsPath)
-            print (params)
             
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
@@ -131,6 +131,7 @@ class MainClass:
         if uploaded:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
+            st.session_state['doneCono'] = False
 
     
     def menu_display_result_ebsd (self,):
@@ -143,36 +144,43 @@ class MainClass:
         #             'jpn' : '2次微分画像'}[lang]
         menu3 = {'eng' : 'Bandsearch result',
                 'jpn' : 'バンドサーチ結果'}[lang]
+        menu4 = {'eng' : 'Conograph result',
+                 'jpn' : 'Conograph結果表示'}[lang]
+        menulog = 'Conograph log'
         menuList = []
-        if st.session_state['uploaded']:
-            menuList.append (menu0)
+        if st.session_state['doneCono']:
+            menuList = [menu4, menu3, menu0, menulog]
         elif st.session_state['doneEBSD']:
             menuList +=  [menu3, menu0]
+        elif st.session_state['uploaded']:
+            menuList.append (menu0)
+        
         return menuList
     
     def menu_side_jobs (self,):
         lang = st.session_state['lang']
-        menu0 = {'eng' : 'Upload files',
-                 'jpn' : 'ファイルアップロード'}[lang]
+        #menu0 = {'eng' : 'Upload files',
+        #         'jpn' : 'ファイルアップロード'}[lang]
         menu1 = {'eng' : 'Bandsearch',
                  'jpn' : 'バンドサーチ'}[lang]
         #menu2 = {'eng' : 'Band data editor',
         #         'jpn' : 'バンドデータ編集'}[lang]
-        menu2 = 'indexing'
-        menuList = []
+        menu2 = 'Conograph'
         #if not st.session_state['uploaded']:
         #    menuList = [menu0]
-        if st.session_state['uploaded']:
-            menuList = [menu1]
-        elif st.session_state['doneEBSD']:
-            menuList = [menu1, menu2]
-        
+        #print ('#1!!!!!!', st.session_state['uploaded'], st.session_state['doneEBSD'])
+        #if st.session_state['uploaded']:
+        #    menuList = [menu1]
+        #elif st.session_state['doneEBSD']:
+        #    menuList = [menu1, menu2]
+        menuList = [menu1, menu2]
         return menuList    
 
 if __name__ == '__main__':
     title = 'EBSD Conograph'
     objMain = MainClass ()
     objEBSD = EBSDClass ()
+    objCono = Conograph ()
 
     # メイン側のレイアウト
     title_place = st.title (title)
@@ -190,18 +198,6 @@ if __name__ == '__main__':
         #　ファイルアップロード
         with st.container (border = True):
             _ = objMain.upload_files()
-            #    st.session_state['uploaded'] = True
-            #    st.session_state['doneEBSD'] = False
-                    
-        #if st.session_state['doneEBSD']:
-        #    if 'Conograph' not in jobs_side: 
-        #        jobs_side.append ('Conograph')
-
-        if st.session_state['uploaded']:
-            st.session_state['radio_index'] = 0
-            job_bandsearch = {'eng' : 'Band Search','jpn' : 'バンドサーチ'}[lang]
-            if job_bandsearch not in st.session_state['jobs_side']:
-                st.session_state['jobs_side'].append (job_bandsearch)
             
         #--------------------------------------------------------
         #  サイドバーのjobメニュータブ
@@ -210,59 +206,61 @@ if __name__ == '__main__':
         if len (side_jobs) > 0:
             tabs = st.tabs (side_jobs)
             for tab, job_name in zip (tabs, side_jobs):
-            #with jobs[0]:
-            #    objMain.upload_files ()
                 with tab: # バンドサーチ
-                    #if job_name in ['Upload files','ファイルアップロード']:
-                    #    _ = objMain.upload_files ()
-                    if job_name in ['Bandsearch','バンドサーチ']:
+                    if (job_name in ['Bandsearch','バンドサーチ']) & st.session_state['uploaded']:
                         objEBSD.params_menu ()
                         objEBSD.run_band_search ()
 
-                        edit_area = st.empty ()
-                        conf_area = st.empty () # バンド座標編集エリア    
+                    elif (job_name == 'Conograph') & st.session_state['doneEBSD']:
+                        result = objCono.conograph_exec ()
+                        flg_res = objCono.get_result (result)
+           
+        edit_area = st.empty ()
+        conf_area = st.empty () # バンド座標編集エリア    
 
-                        
-                #if exec:
-                #    st.session_state['uploaded'] = False
-                #    st.session_state['doneEBSD'] = True
-
-        #if st.session_state['doneEBSD']:
-        #    _ = objEBSD.add_bands_intersection ()
 
     # メイン表示部
     menuList = objMain.menu_display_result_ebsd ()
     if len (menuList) > 0:
-
         with img_disp.container():
             menu_tabs = st.tabs (menuList)
 
-            for tab, tab_name in zip (menu_tabs, menuList):
-                with tab:
-                    if tab_name in ['EBSD orignal image','EBSD元画像']: # EBSD元画像表示
+        for tab, tab_name in zip (menu_tabs, menuList):
+            with tab:
+                if tab_name in ['EBSD orignal image','EBSD元画像']: # EBSD元画像表示
                         objEBSD.display_ebsd ()
-                    elif tab_name in ['Bandsearch result', 'バンドサーチ結果']:
-                        with st.container (border = True):
-                            st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
+                elif tab_name in ['Bandsearch result', 'バンドサーチ結果']:
+                    with st.container (border = True):
+                        st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
                                     'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
-                            objEBSD.display_ebsd_with_band ()
-                        with st.container (border = True):    
-                            st.write ({'eng' : '＜＜2nd Derivative＞＞',
+                        objEBSD.display_ebsd_with_band ()
+                    with st.container (border = True):    
+                        st.write ({'eng' : '＜＜2nd Derivative＞＞',
                                     'jpn' : '＜＜2次微分画像＞＞'}[lang])
-                            xydata, is_clicked, res = objEBSD.display_clicked_point ()
-                        if is_clicked & (xydata is None):
-                            st.write ('クリックは範囲外です')
+                        xydata, is_clicked, res = objEBSD.display_clicked_point ()
+                        st.session_state['xydata'] = xydata
+                        st.session_state['res_clicked'] = res
+                    if is_clicked & (xydata is None):
+                        st.write ('クリックは範囲外です')
 
-                        with edit_area.container(border = True):
-                            st.write ({
+                    with edit_area.container(border = True):
+                        st.write ({
                             'eng' : '＜＜Band date editor＞＞',
                             'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
-                            edited = objEBSD.manage_data_editor (xydata, res)
-                    
+                        xydata = st.session_state['xydata']
+                        res = st.session_state['res_clicked']
+                        edited = objEBSD.manage_data_editor (xydata, res)
                         if edited:
                             with conf_area.container (border = True):
                                 st.write ({
                                     'eng' : '＜＜For confirmation after edit＞＞',
                                     'jpn' : '＜＜編集後の確認用＞＞'}[lang])
                                 objEBSD.df_for_monitor ()
+
+                elif tab_name == 'Conograph log':
+                    flg_log = objCono.request_log ()
+                    objCono.display_log ()
+
+                elif tab_name in ['Conograph result', 'Conograph結果表示']:
+                    objCono.display_result ()
                 
