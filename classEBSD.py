@@ -451,8 +451,8 @@ class EBSDClass:
         if added | doneIntsec:
             with col2:
                 if st.button ({
-                    'eng' : 'Band id added. Feedback to image??',
-                    'jpn' : 'バンドが追加されています。画像へ反映させますか？'}[lang]):
+                    'eng' : 'To feedback band added to image, please press button',
+                    'jpn' : 'バンド追加を画像へ反映するため、このボタンを押してください'}[lang]):
                     st.write ({'eng' : 'Feedback complete!!',
                                'jpn' : '反映完了!!'}[lang])
 

@@ -115,13 +115,14 @@ def read_params_import_bandsearch ():
 
     return ans
 
-def to_params_conograph (readPath, savePath):
+def to_params_conograph (readPath = None,
+                    savePath = 'input/input.txt', params = None):
     namesDict  = {
         'use_band_width' : '# use only band centers : 0, use band width : 1 ',
         'searchLevel' : '# 0:quick search, 1:exhaustive search',
         'range_deg' : '# The input phi, sigma are supposed to contain errors within this range (degree).',
         'tolerance_unit_cell' : '# The unit-cell scales s1, s2 computed from band widths are supposed to equal,\n# if both of s1 <= s2*(this.value) and s2 <= s1*(this.value) hold.',
-        'tolerance_vector_length_gain' : '# (Used only for Bravais lattice determination and selection of output solutions when there are very similar solutions)\n# lattice-vector lengths d1, d2 are considered to equal, if d1 <= d2*(1+ this.value) and d2 <= d1*(1+ this.value) hold.',
+        'tolerance_vector_length_gain' : '# (Used only for Bravais lattice determination and selection of output solutions when there are very similar solutions)\n# if both of s1 <= s2*(this.value) and s2 <= s1*(this.value) hold.',
         'tolerance_vector_length' : '# (Used only for selecting output solutions when there are very similar ones)\n#  lattice-vector lengths d1, d2 are considered to equal, if d1 <= d2*(1+ this.value) and d2 <= d1*(1+ this.value) hold.',
         'num_miller_idx' : '# The number of the Miller indices generated for computation of the figure of merit M.',
         'th_hkl' : '# The upper threshold for the absolute values |h|, |k|, |l| of the Miller indices generated for computation of the figure of merit M.',
@@ -130,8 +131,11 @@ def to_params_conograph (readPath, savePath):
         'axisRhombohedralSym' : '# Axis for rhombohedral symmetry (“Rhombohedral” or “Hexagonal”)',
         'axisMonoclinicSym' : '# Axis for monoclinic symmetry ("A", "B", or "C")',
         'latexStyle' : '# Output in latex style (0:no, 1:yes (for journal writing))'}
-    names = list (namesDict.keys())
-    params = read_params (names, readPath)
+    
+    if params is None:
+        names = list (namesDict.keys())
+        params = read_params (names, readPath)
+    
     use_band_width = None
     ans = []
     for k, v in params.items():
@@ -163,12 +167,14 @@ def read_kikuchi_radius (path):
 
 def read_cono_summary (path = 'result/out.txt'):
     ans = {}
+    nums = ['({})'.format(i) for i in range (1,15)]
     with open (path, 'r', encoding = 'utf-8') as f:
-        lines = [line.strip() for line in list (f.readlines())[7:21]]
-    
-    for line in lines:
-        lattice = line.split (' ')[1]
-        ans[lattice] = line
+        for line in f.readlines():
+            if any ([num in line for num in nums]):
+                line = line.strip()
+                lattice = line.split (' ')[1]
+                ans[lattice] = line.strip()
+            if len (ans) == 14: break
     return ans
 
 def put_separate (text):
@@ -237,12 +243,27 @@ def read_out_file(path):
 
     return ans
 
+def read_input_txt (names, path = 'input/input.txt'):
+    with open (path, 'r', encoding = 'utf-8') as f:
+        lines = list (f.readlines())
+    ans = {}
+    for line in lines:
+        line = line.strip()
+        if ('#' in line) | (len (line) == 0):
+            continue
+        name = names.pop (0)
+        ans[name] = line.strip()
+        if len (names) == 0: break
+    return ans
+
 if __name__ == '__main__':
-    """path = 'result/out.txt'
-    ans = read_out_file (path)
-    print (ans['rad_kikuchi'])
-    print (ans['summary'])
-    print (ans['Monoclinic(C)'])"""
-    text = ' a1 = (   -0.8376    0.2598   -0.7413) (    0.0295    0.0572    0.0253)'
-    text = '    0.9630    0.9931    1.1949   97.9890  106.8678  108.8798      0.0000'
-    print (put_separate (text))
+    names = [
+            'use_band_width', 'searchLevel', 'range_deg',
+            'tolerance_unit_cell',
+            'tolerance_vector_length_gain',
+            'tolerance_vector_length', 'num_miller_idx',
+            'th_hkl', 'ref_shift_dXdYdZ', 'th_fm',
+            'axisRhombohedralSym', 'axisMonoclinicSym',
+            'latexStyle']
+    ans = read_input_txt (names = names[1:])
+    print (ans)

@@ -1,14 +1,10 @@
 import os
 import shutil
-import numpy as np
-import json
 import pandas as pd
-import cv2
-import matplotlib.pyplot as plt
 import requests
 import streamlit as st
-from streamlit_image_coordinates import streamlit_image_coordinates
-from dataIO import to_params_conograph, read_out_file
+from dataIO import to_params_conograph, read_out_file,\
+        read_input_txt, read_params
 
 class Conograph:
     def __init__ (self,):
@@ -42,6 +38,29 @@ class Conograph:
             'Buerger_lattice_basis_after_refinement',
             'indexing_before_refinement',
             'indexing_after_refinement']
+        
+        self.paramNames = [
+            'searchLevel',
+            'range_deg', 
+            'tolerance_unit_cell',
+            'tolerance_vector_length_gain',
+            'tolerance_vector_length', 'num_miller_idx',
+            'th_hkl', 'ref_shift_dXdYdZ', 'th_fm',
+            'axisRhombohedralSym', 'axisMonoclinicSym',
+            'latexStyle']
+        
+        self.cvtTbl = {
+            'range_deg' : 'Tolerance of Φ and σ (deg)',
+            'tolerance_unit_cell' : 'Unit cell scales for s1 & s2',
+            'tolerance_vector_length_gain' : 'Tolerance (s1 <= s2*(this.value) and s2 <= s1*(this.value))',
+            'tolerance_vector_length' : 'Tolerlance (d1 <= d2*(1+ this.value) and d2 <= d1*(1+ this.value))',
+            'num_miller_idx' : 'Number of the Miller indices',
+            'th_hkl' : 'Upper threshold for the absolute values |h|, |k|, |l|',
+            'th_fm' : 'Threshold for ouput figure of merit',
+            'axisRhombohedralSym' : 'Axis for rhombohedral symmetry',
+            'axisMonoclinicSym' : 'Axis for monoclinic symmetry',
+            'latexStyle' : 'Output latex style'}
+
 
     def data0_or_1 (self, use_band_width):
         return {
@@ -56,7 +75,7 @@ class Conograph:
         shutil.copyfile (dPath, self.dataPath)
 
     def load_files (self,):
-        self.prepare_data_params ()
+        #self.prepare_data_params ()
         uploaded_map = {}
         with open (self.paramsPath, 'rb') as f:
             uploaded_map['input.txt'] = f.read()
@@ -178,6 +197,107 @@ class Conograph:
             else:
                 st.write (resultKey)
 
+    def set_data_0or1 (self, use_band_width):
+        nums = ['0 : use band center', '1 : use band edges']
+        v = st.selectbox (
+            'Select use band center or edges',
+            nums, index = int (use_band_width),
+            key = 'use_band_edges')
+        v = nums.index (v)
+        dPath = self.data0_or_1 (v)
+        if os.path.exists (self.dataPath):
+            os.remove (self.dataPath)
+        shutil.copyfile (dPath, self.dataPath)
 
+    def select_search_level (self, v):
+        vlist = ['0 : Quick', '1 : Exhaustive']
+        v = st.selectbox (
+            'Select search level', vlist, index = int (v),
+            key = 'search_level')
+        v = vlist.index (v)
+        return str (v)
+
+    def centerShift_dxdydz (self, v):
+        vs = v.split()
+        options = ['0 : No', '1 : Yes']
+        ans = []
+        st.write ('Refine pattern center shift')
+        for col, v, label in zip (st.columns (3), vs, ['ΔX', 'ΔY', 'ΔZ']):
+            with col:
+                v = st.selectbox (
+                    label, options, index = int (v), key = label)
+            v = options.index(v)
+            ans.append (str (v))
+        return ans
+
+    def axisRhombohedralSym (self, v):
+        options = ['Rhombohedral', 'Hexagonal']
+        select = st.selectbox (
+            self.cvtTbl['axisRhombohedralSym'],
+            options, index = options.index(v),
+            key = 'axisRhonmbohedral')
+        return select
+    
+    def axisMonoclinicSym (self, v):
+        options = ['A','B','C']
+        select = st.selectbox (
+            self.cvtTbl['axisMonoclinicSym'],
+            options, index = options.index (v),
+            key = 'axisMonoclinicSym')
+        return select
+
+    def latex_style (self, v):
+        options = ['0 : No', '1 : Yes']
+        select = st.selectbox (
+            self.cvtTbl['latexStyle'],
+            options, index = int (v),
+            key = 'latex_style')
+        select = options.index (select)
+        return str (select)
+
+    def params_menu (self,):
+        lang = st.session_state['lang']
+        self.prepare_data_params ()
+        if st.session_state['use_band_width'] is None:
+            use_band_width = read_params (names = ['use_band_width'])['use_band_width']
+            st.session_state['use_band_width'] = int (use_band_width)
+        else:
+            use_band_width = st.session_state['use_band_width']
+        
+        params = {}        
+        params['use_band_width'] = use_band_width
+        for k,v in read_input_txt (self.paramNames,
+                                path = self.paramsPath).items():
+            params[k] = v
+        
+        ans = {}
+        with st.expander ({'eng' : 'Parameter menu',
+                    'jpn' : 'パラメータメニュー'}[lang]):
+            for k, v in params.items():
+                if k == 'use_band_width':
+                    self.set_data_0or1 (v)
+                elif k == 'searchLevel':
+                    ans[k] = self.select_search_level (v)
+                elif k == 'ref_shift_dXdYdZ':
+                    ans[k] = self.centerShift_dxdydz (v)
+                elif k == 'axisRhombohedralSym':
+                    ans[k] = self.axisRhombohedralSym (v)
+                elif k == 'axisMonoclinicSym':
+                    ans[k] = self.axisMonoclinicSym (v)
+                elif k == 'latexStyle':
+                    ans[k] = self.latex_style (v)
+                else:
+                    label = self.cvtTbl[k]
+                    ans[k] = st.text_input (
+                        label, v, key = label)
+        
+        to_params_conograph (params = ans)
+                
+
+
+
+
+
+        
 
         

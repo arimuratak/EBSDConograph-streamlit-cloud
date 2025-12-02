@@ -6,7 +6,6 @@ from dataIO import zip_folder
 from init_session_state import build_session_state
 from classEBSD import EBSDClass
 from classConograph import Conograph
-from dataIO import read_params
 
 build_session_state ()
 if st.session_state['uploaded'] is None:
@@ -138,10 +137,6 @@ class MainClass:
         lang = st.session_state['lang']
         menu0 = {'eng':'EBSD orignal image',
                 'jpn' : 'EBSD元画像'}[lang]
-        #menu1 = {'eng' : 'EBSD image (w/ bands)',
-        #             'jpn' : 'EBSD画像 (バンド付)'}[lang]
-        #menu2 = {'eng' : '2nd derivative image',
-        #             'jpn' : '2次微分画像'}[lang]
         menu3 = {'eng' : 'Bandsearch result',
                 'jpn' : 'バンドサーチ結果'}[lang]
         menu4 = {'eng' : 'Conograph result',
@@ -149,7 +144,7 @@ class MainClass:
         menulog = 'Conograph log'
         menuList = []
         if st.session_state['doneCono']:
-            menuList = [menu4, menu3, menu0, menulog]
+            menuList = [menu4, menulog, menu3, menu0]
         elif st.session_state['doneEBSD']:
             menuList +=  [menu3, menu0]
         elif st.session_state['uploaded']:
@@ -159,20 +154,9 @@ class MainClass:
     
     def menu_side_jobs (self,):
         lang = st.session_state['lang']
-        #menu0 = {'eng' : 'Upload files',
-        #         'jpn' : 'ファイルアップロード'}[lang]
         menu1 = {'eng' : 'Bandsearch',
                  'jpn' : 'バンドサーチ'}[lang]
-        #menu2 = {'eng' : 'Band data editor',
-        #         'jpn' : 'バンドデータ編集'}[lang]
         menu2 = 'Conograph'
-        #if not st.session_state['uploaded']:
-        #    menuList = [menu0]
-        #print ('#1!!!!!!', st.session_state['uploaded'], st.session_state['doneEBSD'])
-        #if st.session_state['uploaded']:
-        #    menuList = [menu1]
-        #elif st.session_state['doneEBSD']:
-        #    menuList = [menu1, menu2]
         menuList = [menu1, menu2]
         return menuList    
 
@@ -212,6 +196,7 @@ if __name__ == '__main__':
                         objEBSD.run_band_search ()
 
                     elif (job_name == 'Conograph') & st.session_state['doneEBSD']:
+                        objCono.params_menu ()
                         result = objCono.conograph_exec ()
                         flg_res = objCono.get_result (result)
            
