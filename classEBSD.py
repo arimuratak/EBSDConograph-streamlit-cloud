@@ -468,7 +468,7 @@ class EBSDClass:
         st.session_state['params'] = params
 
     def param_PC0 (self, params):
-        param_name = st.session_state['param_name']
+        param_name = st.session_state['file_name']
         PC0 = params['PC0']
         col0, col1, col2, col3 = st.columns (4)
         with col0: st.write ('PC0')
@@ -487,7 +487,7 @@ class EBSDClass:
         return ans
 
     def param_uniq (self, params, name = 'Circle'):
-        param_name = st.session_state['param_name']
+        param_name = st.session_state['file_name']
         vstr = str (params[name])
         if name == 'Circle':
             options = ['False', 'True']
