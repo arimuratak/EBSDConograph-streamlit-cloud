@@ -87,10 +87,12 @@ class MainClass:
              'jpn' : 'EBSD画像ファイル アップロード'}[lang],
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
         
+        if img_file is None: key = 'param'
+        else: key = 'param_' + img_file.name
         param_file = st.file_uploader (
                 {'eng' : 'Upload parameter file (py)',
                 'jpn' : 'パラメータファイル アップロード (py)'}[lang],
-                type = ['py'], key = 'param')
+                type = ['py'], key = key)
         
         flg_new_file = False
         if img_file is not None:
@@ -99,14 +101,11 @@ class MainClass:
             else: flg_new_file = True
         
         flg_new_param = False
-        #if (img_file is not None) and (st.session_state['file_name'] != img_file.name):
         if param_file is not None:
-            if st.session_state['param_name'] is not None:
-                flg_new_param = st.session_state['param_name'] != param_file.name
-            else: flg_new_param = True
+            flg_new_param = True
+     
         
-        
-        if flg_new_file and flg_new_param:
+        if flg_new_file & flg_new_param:
             shutil.rmtree (self.input); os.makedirs (self.input)
             # EBSD画像は、inputフォルダへ保存
             fname = img_file.name
@@ -131,6 +130,7 @@ class MainClass:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
             st.session_state['doneCono'] = False
+
 
     
     def menu_display_result_ebsd (self,):

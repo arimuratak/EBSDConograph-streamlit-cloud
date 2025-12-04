@@ -7,7 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
-from dataIO import fig2img, cvtPos, update_params, read_params
+from dataIO import fig2img, cvtPos, update_params, read_params, is_numeric
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
         addBand_theta_edges, addBand_theta_rho
@@ -384,9 +384,9 @@ class EBSDClass:
 
         idx_changed = None; col_changed = None
         for col in df.columns:
-            olds = np.array (df[col].tolist()) #; print (olds)
-            news = np.array (newDf[col].tolist()) #; print (news)
-            flgs = (olds != news).astype (int) #; print (flgs)
+            olds = np.array (df[col].tolist())
+            news = np.array (newDf[col].tolist())
+            flgs = (olds != news).astype (int)
             if flgs.sum () > 0:
                 idx_changed = np.argmax (flgs)
                 col_changed = col
@@ -397,7 +397,7 @@ class EBSDClass:
     def addBandThetaRho (self, xydata):
         res = ''
         if xydata is not None:
-            theta, rho = xydata #; print (xydata)
+            theta, rho = xydata
             res = addBand_theta_rho (theta, rho)
             st.session_state['lines_for_display'] = self.get_lines_for_display ()
         return res
@@ -446,8 +446,7 @@ class EBSDClass:
                 removeBands ([idx])
                 addBand_theta_edges (theta, rhomin, rhomax)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
-            #print (st.session_state['lines_for_display'])
-        #print (added, xydata, idx, col, indices)
+
         if added | doneIntsec:
             with col2:
                 if st.button ({
@@ -481,6 +480,8 @@ class EBSDClass:
                 pc = st.text_input (
                         key, PC0[i], key = key,
                         label_visibility = 'hidden')
+                if not is_numeric (pc):
+                    st.write ('Please input numeric value!!')
                 ans.append (pc)
         
         return ans
@@ -488,8 +489,16 @@ class EBSDClass:
     def param_uniq (self, params, name = 'Circle'):
         param_name = st.session_state['param_name']
         vstr = str (params[name])
-        if name == 'Circle': name += ' (True / False)'
-        ans = st.text_input (name, vstr, key = name + param_name)
+        if name == 'Circle':
+            options = ['False', 'True']
+            ans = st.selectbox (name,
+                    options, index = options.index(vstr),
+                    key = name + param_name)
+        else:
+            ans = st.text_input (name, vstr, key = name + param_name)
+            if not is_numeric(ans):
+                st.write ('Please input numeric value!!')
+
         return ans
     
     def params_menu (self,):

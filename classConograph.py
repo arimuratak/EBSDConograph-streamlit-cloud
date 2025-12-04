@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 import streamlit as st
 from dataIO import to_params_conograph, read_out_file,\
-        read_input_txt, read_params
+        read_input_txt, read_params, is_numeric
 
 class Conograph:
     def __init__ (self,):
@@ -31,13 +31,29 @@ class Conograph:
             'chi_squares' : 'χ squares at the beginning and the end of the refinement',
             'indexing_before_refinement' : 'Indexing with the parameters before refinement',
             'indexing_after_refinement' : 'Indexing with the parameters after refinement'}
+
+        self.cols_to_disp = {
+            'lattice_const_before_refinement' : ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor'],
+            'lattice_const_after_refinement' : ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor', 'a/c', 'b/c'],
+            'euler_angles' : ['θ1', 'θ2', 'θ3', 'Err_θ1', 'Err_θ2', 'Err_θ3'],
+            'projection_center_shifts' : ['Δx', 'Δy', 'Δz', 'Err_Δx', 'Err_Δy', 'Err_Δz'],
+            'indexing_before_refinement' : [
+                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?'],
+                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?', 'band_width_cal', 'band_width_obs']
+                ],
+            'indexing_after_refinement' : [
+                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?'],
+                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?', 'band_width_cal', 'band_width_obs']
+                ]
+            }
+
+        
+
         self.label2key = {v:k for k,v in self.key2label.items()}
 
         self.keys_lines = [
             'Buerger_lattice_basis_before_refinement',
-            'Buerger_lattice_basis_after_refinement',
-            'indexing_before_refinement',
-            'indexing_after_refinement']
+            'Buerger_lattice_basis_after_refinement']
         
         self.paramNames = [
             'searchLevel',
@@ -153,6 +169,16 @@ class Conograph:
                 file_name = 'result.txt',
                 mime="text/plain")
 
+    def display_as_df (self, cols, texts):
+        if not isinstance (texts, list):
+            texts = texts.split ('\n')
+        if len (texts) > 1: texts = texts[1:]
+        texts = [ts.split(',') for ts in texts]
+        df = pd.DataFrame (texts, columns = cols)
+        st.data_editor (df, num_rows = 'fixed',
+                        disabled  =True)
+
+
     def display_result (self,):
         result = read_out_file (self.outPath)
 
@@ -194,6 +220,13 @@ class Conograph:
             if labelKey in self.keys_lines:
                 text = '  \n'.join (resultKey)
                 st.markdown (text)
+            elif labelKey in self.cols_to_disp:
+                if 'indexing_' in labelKey:
+                    n = int (len (resultKey[0]) == 12)
+                    cols = self.cols_to_disp[labelKey][n]
+                else:
+                    cols = self.cols_to_disp[labelKey]
+                self.display_as_df (cols, resultKey)
             else:
                 st.write (resultKey)
 
@@ -288,16 +321,12 @@ class Conograph:
                     ans[k] = self.latex_style (v)
                 else:
                     label = self.cvtTbl[k]
-                    ans[k] = st.text_input (
+                    tmp = st.text_input (
                         label, v, key = label)
+                    if not is_numeric (tmp):
+                        st.write ('Please input numeric value!!')
+                        tmp = v
+                    ans[k] = tmp
         
         to_params_conograph (params = ans)
-                
-
-
-
-
-
-        
-
         

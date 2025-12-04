@@ -256,6 +256,13 @@ def read_input_txt (names, path = 'input/input.txt'):
         if len (names) == 0: break
     return ans
 
+def is_numeric (value):
+    try:
+        float (value)
+        return True
+    except ValueError:
+        return False
+
 if __name__ == '__main__':
     names = [
             'use_band_width', 'searchLevel', 'range_deg',
