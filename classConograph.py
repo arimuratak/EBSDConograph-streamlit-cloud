@@ -69,16 +69,17 @@ class Conograph:
             'latexStyle']
         
         self.cvtTbl = {
-            'range_deg' : 'Tolerance of Φ and σ (deg)',
-            'tolerance_unit_cell' : 'Unit cell scales for s1 & s2',
-            'tolerance_vector_length_gain' : 'Tolerance (s1 <= s2*(this.value) and s2 <= s1*(this.value))',
-            'tolerance_vector_length' : 'Tolerlance (d1 <= d2*(1+ this.value) and d2 <= d1*(1+ this.value))',
-            'num_miller_idx' : 'Number of the Miller indices',
-            'th_hkl' : 'Upper threshold for the absolute values |h|, |k|, |l|',
-            'th_fm' : 'Threshold for ouput figure of merit',
+            'searchLevel' : 'Quick search/exhaustive search',
+            'range_deg' : 'Upper bound on errors in Φ, σ, σ_begin, σ_end',
+            'tolerance_unit_cell' : 'Tolerance level for errors in the unit-cell scales',
+            'tolerance_vector_length_gain' : 'Resolution for Bravais-type determination',
+            'tolerance_vector_length' : 'Resolution for selecting output solutions',
+            'num_miller_idx' : 'Number of hkl generated  for indexing',
+            'th_hkl' : 'Max |h|,|k|,|l| used for indexing',
+            'th_fm' : 'Lower threshold of FOM',
             'axisRhombohedralSym' : 'Axis for rhombohedral symmetry',
             'axisMonoclinicSym' : 'Axis for monoclinic symmetry',
-            'latexStyle' : 'Output latex style'}
+            'latexStyle' : 'Output in latex style'}
 
 
     def data0_or_1 (self, use_band_width):
@@ -257,8 +258,9 @@ class Conograph:
 
     def select_search_level (self, v):
         vlist = ['0 : Quick', '1 : Exhaustive']
+        label = self.cvtTbl['searchLevel']
         v = st.selectbox (
-            'Select search level', vlist, index = int (v),
+            label, vlist, index = int (v),
             key = 'search_level')
         v = vlist.index (v)
         return str (v)
@@ -267,7 +269,7 @@ class Conograph:
         vs = v.split()
         options = ['0 : No', '1 : Yes']
         ans = []
-        st.write ('Refine pattern center shift')
+        st.write ('Flags to fit the projection center shifts')
         for col, v, label in zip (st.columns (3), vs, ['ΔX', 'ΔY', 'ΔZ']):
             with col:
                 v = st.selectbox (
