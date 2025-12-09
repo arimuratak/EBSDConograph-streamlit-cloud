@@ -182,7 +182,7 @@ class Conograph:
     def display_as_df (self, cols, texts):
         if not isinstance (texts, list):
             texts = texts.split ('\n')
-        if len (texts) > 1: texts = texts[1:]
+        
         texts = [ts.split(',') for ts in texts]
         df = pd.DataFrame (texts, columns = cols)
         st.data_editor (df, num_rows = 'fixed',
