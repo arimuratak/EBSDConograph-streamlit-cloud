@@ -187,7 +187,7 @@ class Conograph:
         texts = [ts.split(',') for ts in texts]
         df = pd.DataFrame (texts, columns = cols)
         st.data_editor (df, num_rows = 'fixed',
-                        disabled  =True)
+                        disabled  =True, hide_index = True)
 
 
     def display_result (self,):
