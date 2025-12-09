@@ -34,7 +34,10 @@ class Conograph:
 
         self.cols_to_disp = {
             'lattice_const_before_refinement' : ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor'],
-            'lattice_const_after_refinement' : ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor', 'a/c', 'b/c'],
+            'lattice_const_after_refinement' : [
+                ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor', 'a/c', 'b/c'],
+                ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor', 'a/c', 'b/c', "a'", "b'", "c'"]
+                ],
             'euler_angles' : ['θ1', 'θ2', 'θ3', 'Err_θ1', 'Err_θ2', 'Err_θ3'],
             'projection_center_shifts' : ['Δx', 'Δy', 'Δz', 'Err_Δx', 'Err_Δy', 'Err_Δz'],
             'indexing_before_refinement' : [
@@ -150,12 +153,19 @@ class Conograph:
         return ans
     
     def display_log (self,):
-        text = ''
+        lang = st.session_state['lang']
         if os.path.exists (self.logPath):
             with open (self.logPath, 'r', encoding = 'utf-8') as f:
-                text = f.read ()
+                st.download_button (
+                    {'eng' : 'Download log file',
+                     'jpn' : 'logファイルダウンロード'}[lang],
+                     data = f,
+                     file_name = 'log.txt',
+                     mime = 'text/plain')
         
-        st.text_area ('log', text, height = 400,
+            with open (self.logPath, 'r', encoding = 'utf-8') as f:
+                text = f.read ()
+            st.text_area ('log', text, height = 400,
                     label_visibility='hidden')
 
     def download_result (self,):
@@ -221,8 +231,11 @@ class Conograph:
                 text = '  \n'.join (resultKey)
                 st.markdown (text)
             elif labelKey in self.cols_to_disp:
-                if 'indexing_' in labelKey:
-                    n = int (len (resultKey[0]) == 12)
+                if ('indexing_' in labelKey) | (labelKey == 'lattice_const_after_refinement'):
+                    if isinstance (resultKey, list):
+                        n = int (len (resultKey[0].split(',')) == 12)
+                    else:
+                        n = int (len (resultKey.split(',')) == 12)
                     cols = self.cols_to_disp[labelKey][n]
                 else:
                     cols = self.cols_to_disp[labelKey]

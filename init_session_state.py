@@ -7,6 +7,8 @@ def build_session_state ():
         st.session_state['BandKukans'] = None
     if 'shape' not in st.session_state:
         st.session_state['shape'] = None
+    if 'Circle' not in st.session_state:
+        st.session_state['Circle'] = None
     if 'uploaded' not in st.session_state:
         st.session_state['uploaded'] = None
     if 'doneEBSD' not in st.session_state:

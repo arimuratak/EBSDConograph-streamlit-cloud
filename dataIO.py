@@ -202,6 +202,8 @@ def read_out_file(path):
             ans[lattice][candNo]['lattice_const_before_refinement'] = put_separate (lines.pop(0))
         elif '# a : b : c  alpha  beta  gamma (degree) scale_factor, a/c, b/c (after refinement)' in line:
             ans[lattice][candNo]['lattice_const_after_refinement'] = put_separate (lines.pop(0))
+        elif '# a : b : c  alpha  beta  gamma (degree) scale_factor, a/c, b/c, a, b, c (after refinement)' in line:
+            ans[lattice][candNo]['lattice_const_after_refinement'] = put_separate (lines.pop(0))
         elif '# propagation errors when the errors of the input angles are assumed to be within 1 deg.' in line:
             ans[lattice][candNo]['propagation_errors'] = put_separate (lines.pop (0))
         elif '# Buerger-reduced reciprocal_lattice basis (before refinement)' in line:
@@ -225,16 +227,16 @@ def read_out_file(path):
         elif '# Chi-squares at the beginning and the end of the refinement' in line:
             ans[lattice][candNo]['chi_squares'] = put_separate (lines.pop(0))
         elif '# Indexing with the parameters before refinement' in line:
-            colsLine = lines.pop(0).strip('#').strip()
-            vsList = [colsLine]
+            _ = lines.pop(0)
+            vsList = []
             while True:
                 if ('#' in lines[0]) | (lines[0] == ''):
                     break
                 vsList.append (put_separate (lines.pop(0)))
             ans[lattice][candNo]['indexing_before_refinement'] = vsList
         elif '# Indexing with the parameters after refinement' in line:
-            colsLine = lines.pop(0).strip('#').strip()
-            vsList = [colsLine]
+            _ = lines.pop(0)
+            vsList = []
             while True:
                 if ('#' in lines[0]) | (lines[0] == ''):
                     break

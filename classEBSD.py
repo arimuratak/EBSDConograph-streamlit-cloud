@@ -7,6 +7,10 @@ import cv2
 import matplotlib.pyplot as plt
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
+import sys
+import time
+from io import StringIO
+import contextlib
 from dataIO import fig2img, cvtPos, update_params, read_params, is_numeric
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
@@ -522,5 +526,3 @@ class EBSDClass:
         
         if len (ans) > 0:
             update_params (params = ans, path = self.paramsPath)
-
-        

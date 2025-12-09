@@ -662,6 +662,7 @@ def run():
     global BAND_WIDTH_MIN
     global BAND_WIDTH_MAX
 
+    logs = []
     try:
         import file
         #import ebsd
@@ -676,7 +677,9 @@ def run():
         Circle = params.Circle   # True: EBSD画像は円, False: 四角
         #print (PC0, Circle)
         # 画像のリスケール
+    
         print('Rescale image...', flush=True)
+        logs.append ('Rescale image...')
         image = imread(filename, as_gray=True) # 画像の読込み
         RescaleParam = params.RescaleParam / max(image.shape) # 画像のスケールを縮小するパラメータ
         image = rescale(image, scale=RescaleParam, mode='reflect') # 画像のスケールを変更
@@ -685,6 +688,7 @@ def run():
             image, mask_circle = setZeroOutsideCircle (image)
         # sigma(EBSD画像の標準偏差)を推定
         print('Calculate error...', flush=True)
+        logs.append ('Calculate error...')
         sigma = calcSigma (image, mask_circle)
         # L=[]
         # for n in range(len(image)):
@@ -695,11 +699,14 @@ def run():
         # sigma = sum(LL)/len(LL) #画像の標準偏差 => 絶対値の平均（外れ値の影響軽減のため）
         print(f'  Mean error of input image = {sigma}', flush=True)
         print(f'  Error estimated by using the input threshold = {sigma*params.thred}', flush=True)
+        logs += [f'  Mean error of input image = {sigma}',
+                f'  Error estimated by using the input threshold = {sigma*params.thred}']
 
         # band width min maxを画像サイズから再計算
         BAND_WIDTH_MIN = params.BAND_WIDTH_MIN * max(image.shape)
         BAND_WIDTH_MAX = params.BAND_WIDTH_MAX * max(image.shape)
         print ('updated band width min : {:.2f} px, max : {:.2f} px'.format(BAND_WIDTH_MIN, BAND_WIDTH_MAX))
+        logs.append ('updated band width min : {:.2f} px, max : {:.2f} px'.format(BAND_WIDTH_MIN, BAND_WIDTH_MAX))
 
         shape = image.shape
         imsave('result/out.rescaled.png', exposure.rescale_intensity(image, in_range='image', out_range='uint8').astype(np.uint8))
@@ -708,14 +715,18 @@ def run():
         print(f'  Projection center: {PC} px', flush=True)
         print(f'  EBSD image is a circle?: {Circle}', flush=True)
         print(f'  done', flush=True)
+        logs += [
+            f'  Size: {shape} px', f'  Projection center: {PC} px',
+            f'  EBSD image is a circle?: {Circle}', f'  done']
         
         # ラドン変換
-        print('Radon transform...', flush=True)
+        print('Radon transform...', flush=True); logs.append ('Radon transform...')
         thetas = np.linspace(0., 180., max(image.shape), endpoint=False) # thetaのbin幅 = 180./画像の横幅・縦幅の大きい方, とする。
         sinogram = radon(image, theta=thetas, circle=Circle)              # ラドン変換
         imsave('result/out.radon.png', exposure.rescale_intensity(sinogram, in_range='image', out_range='uint8').astype(np.uint8))
         print(f'  Size: {sinogram.shape}', flush=True)
         print('  done', flush=True)
+        logs += [f'  Size: {sinogram.shape}', '  done']
         
         # ラドン変換の誤差値(各(rho, sigma)に対応する(画像内線分の長さ)^{1/2}*sigma)を求める
         #　線分の長さはスケール変換後の値。
@@ -724,7 +735,7 @@ def run():
         print('  done', flush=True)
         
         # 微分値の計算
-        print('Calculate derivatives...', flush=True)
+        print('Calculate derivatives...', flush=True); logs.append ('Calculate derivatives...')
         ArraySmth = np.zeros((sinogram.shape[0], sinogram.shape[1])) # 2D arrays for storing (rho, theta)
         ArrayDeriv1 = np.zeros((sinogram.shape[0], sinogram.shape[1]))
         ArrayDeriv2 = np.zeros((sinogram.shape[0], sinogram.shape[1]))
@@ -750,6 +761,7 @@ def run():
         imsave('result/out.2nd_derivative.png', exposure.rescale_intensity(ArrayDeriv2, in_range='image', out_range='uint8').astype(np.uint8))
         imsave(name_ArrayDeriv2, ArrayDeriv2)
         print('  done', flush=True)
+        logs += ['  done']
         
 		# 計算結果を画面上で確認するため
         # 1次微分, 2次微分の画像作成
@@ -768,11 +780,12 @@ def run():
         #plt.show()
         
         # バンド抽出
-        print('Search bands...', flush=True)
+        print('Search bands...', flush=True); logs.append ('Search bands...')
         BandKukans = []
         searchBand(rhos, thetas, ArrayDeriv2, ArraySinogramErrors    , 
                    image.shape, PC, BandKukans    )
         print(f'  bands: {len(BandKukans)} => ', end='', flush=True)
+        logs.append (f'  bands: {len(BandKukans)} => ')
         # thetaの差がdtheta(degree)以下で、rhoの区間が重なるバンドのうち　convolutionの値が最大値となるバンドのリスト
         selectBands(params.dtheta, BandKukans)
         
@@ -809,12 +822,15 @@ def run():
         st.session_state['BandKukans'] = BandKukans
         st.session_state['shape'] = shape
         st.session_state['ArrayDeriv2'] = ArrayDeriv2
+        
 
     except Exception as e:
         print(e, file=sys.stderr, flush=True)
     
     finally:
         print("--- done ---", flush=True)
+        logs += ["--- done ---"]
+
 
 #|
 #| ex) removeBands([2,0,4])  # 0,2,4番目のバンドを消去する
