@@ -790,6 +790,7 @@ def run():
         selectBands(params.dtheta, BandKukans)
         
         print(len(BandKukans), flush=True)
+        logs[-1] += str (len (BandKukans))
         BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
         #print ('\ntime for band search {} sec'.format(time_ed_bs - time_st_bs))
         # iter = 0
@@ -823,13 +824,15 @@ def run():
         st.session_state['shape'] = shape
         st.session_state['ArrayDeriv2'] = ArrayDeriv2
         
-
     except Exception as e:
         print(e, file=sys.stderr, flush=True)
+        logs.append (str (e))
     
     finally:
         print("--- done ---", flush=True)
         logs += ["--- done ---"]
+
+    return logs
 
 
 #|
@@ -998,18 +1001,21 @@ def addBand_theta_edges(targetTheta, rhomin, rhomax):
     band = getBand_theta_rhos(targetTheta, rhomin, rhomax)
     if band is None:
         print('Failed: no band found', file=sys.stderr, flush=True)
-        return
+        logs = ['Failed: no band found']
+        return logs
     # 同じバンドが既に存在する場合は何もしない
     if findBand(band, BandKukans) is not None:
         print('Failed: band already exists', file=sys.stderr, flush=True)
-        return
+        logs = ['Failed: band already exists']
+        return logs
     # バンドを追加する
     BandKukans.append(band)
     BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
     st.session_state['BandKukans'] = BandKukans
     print(f'ADDED: (θ, ρ_cener, ρ_begin, ρ_end) = ({band.center_rt[1]:.4f} {band.center_rt[0]:.4f} {band.edge_rhos[0]:.4f} {band.edge_rhos[1]:.4f})', flush=True)
     printAll()
-
+    logs = [f'ADDED: (θ, ρ_cener, ρ_begin, ρ_end) = ({band.center_rt[1]:.4f} {band.center_rt[0]:.4f} {band.edge_rhos[0]:.4f} {band.edge_rhos[1]:.4f})']
+    return logs
 #|
 #| 2つのバンドセンターの交点を返す
 #|
@@ -1045,6 +1051,7 @@ def addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, MinCorrelat
     size = len(BandKukans)
     image_o = [shape[0]//2, shape[1]//2]
     newBands.clear()
+    logs = []
     for i in range(0, size):
         for j in range(i+1, size):
             for k in range(j+1, size):
@@ -1086,6 +1093,8 @@ def addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, MinCorrelat
                             newBands.append(band)
                             print(f"  (θ, ρ) = ({np.rad2deg(theta):.3f}, {rho:.3f}) => ", end='', flush=True)
                             print("ADDED", flush=True)
+                            logs.append (f"  (θ, ρ) = ({np.rad2deg(theta):.3f}, {rho:.3f}) => ADDED")
+    return logs            
 
 
 def addBandsFrom4Bands():
@@ -1093,15 +1102,19 @@ def addBandsFrom4Bands():
     import params
     #params = set_params()
     newBands = []
-    addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, params.MinCorrelation, newBands)
+    logs = addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, params.MinCorrelation, newBands)
     BandKukans.extend(newBands)
     print(f'  bands: {len(BandKukans)} => ', end='', flush=True)
+    logs.append (f'  bands: {len(BandKukans)} => ')
     selectBands(params.dtheta, BandKukans)
     print(len(BandKukans), flush=True)
+    logs[-1] += str (len(BandKukans))
     BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
     st.session_state['BandKukans'] = BandKukans
     printAll()
     print("--- done ---", flush=True)
+    logs.append ("--- done ---")
+    return logs
     
 if __name__ == '__main__':
     run()

@@ -264,6 +264,10 @@ def is_numeric (value):
         return True
     except ValueError:
         return False
+    
+def save_logsList (logs, path):
+    with open (path, 'w', encoding = 'utf-8') as f:
+        f.write ('\n'.join (logs))
 
 if __name__ == '__main__':
     names = [

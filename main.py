@@ -64,7 +64,7 @@ class MainClass:
                 'eng':'Download sample data\n(zip format)', 
                 'jpn' : 'サンプルデータ ダウンロード\n(zip形式)'}[lang],
             data = zip_bytes,
-            file_name = 'sample.zip')
+            file_name = 'sample.zip', key = 'sample_download')
 
     #-------------------------------------------------------
     # file.pyの生成
@@ -130,8 +130,6 @@ class MainClass:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
             st.session_state['doneCono'] = False
-
-
     
     def menu_display_result_ebsd (self,):
         lang = st.session_state['lang']
@@ -141,12 +139,13 @@ class MainClass:
                 'jpn' : 'バンドサーチ結果'}[lang]
         menu4 = {'eng' : 'Conograph result',
                  'jpn' : 'Conograph結果表示'}[lang]
-        menulog = 'Conograph log'
+        ebsdlog = 'EBSD log'
+        conographlog = 'Conograph log'
         menuList = []
         if st.session_state['doneCono']:
-            menuList = [menu4, menulog, menu3, menu0]
+            menuList = [menu4, conographlog, menu3, ebsdlog, menu0]
         elif st.session_state['doneEBSD']:
-            menuList +=  [menu3, menu0]
+            menuList +=  [menu3, ebsdlog, menu0]
         elif st.session_state['uploaded']:
             menuList.append (menu0)
         
@@ -169,7 +168,6 @@ if __name__ == '__main__':
     # メイン側のレイアウト
     title_place = st.title (title)
     img_disp = st.empty() # 画像表示エリア
-    
 
     #サイドバー側のレイアウト＆処理
     with st.sidebar:
@@ -241,6 +239,9 @@ if __name__ == '__main__':
                                     'eng' : '＜＜For confirmation after edit＞＞',
                                     'jpn' : '＜＜編集後の確認用＞＞'}[lang])
                                 objEBSD.df_for_monitor ()
+
+                elif tab_name == 'EBSD log':
+                    objEBSD.display_log ()
 
                 elif tab_name == 'Conograph log':
                     flg_log = objCono.request_log ()

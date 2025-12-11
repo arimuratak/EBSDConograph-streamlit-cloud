@@ -161,8 +161,8 @@ class Conograph:
                     {'eng' : 'Download log file',
                      'jpn' : 'logファイルダウンロード'}[lang],
                      data = f,
-                     file_name = 'log.txt',
-                     mime = 'text/plain')
+                     file_name = 'log_conograph.txt',
+                     mime = 'text/plain', key = 'conograph_log')
         
             with open (self.logPath, 'r', encoding = 'utf-8') as f:
                 text = f.read ()
@@ -344,4 +344,3 @@ class Conograph:
                     ans[k] = tmp
         
         to_params_conograph (params = ans)
-        

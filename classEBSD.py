@@ -11,7 +11,8 @@ import sys
 import time
 from io import StringIO
 import contextlib
-from dataIO import fig2img, cvtPos, update_params, read_params, is_numeric
+from dataIO import fig2img, cvtPos, update_params, \
+    read_params, is_numeric, save_logsList
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
         addBand_theta_edges, addBand_theta_rho
@@ -23,7 +24,7 @@ class EBSDClass:
         self.paramsPath = './params.py'
         self.path_sample = './sample'
         self.path_result = './result'
-        self.path_line_visual = './result/out.shapes.json'
+        #self.path_line_visual = './result/out.shapes.json'
         self.H = None
         self.W = None
         self.cols = ['idx', 'score', 'θ', 'ρ_center', 'ρ_begin', 'ρ_end']
@@ -31,6 +32,7 @@ class EBSDClass:
             'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
             'thred', 'MinCorrelation',
             'BAND_WIDTH_MIN', 'BAND_WIDTH_MAX', 'dtheta']
+        self.logPath = 'result/LOG_EBSD.txt'
         
         os.makedirs (self.input, exist_ok = True)
         os.makedirs (self.path_result, exist_ok = True)
@@ -54,19 +56,20 @@ class EBSDClass:
             'eng' : 'Band search Run',
             'jpn' : 'バンドサーチ実行'}[lang])
         if exec:
-            run ()
+            logs = run ()
             #st.session_state['uploaded'] = False
             st.session_state['doneEBSD'] = True
             st.session_state['doneCono'] = False
             df = self.get_lines_for_display ()
             st.session_state['lines_for_display'] = df
-            st.session_state['just_after_bandsearch'] = True        
+            st.session_state['just_after_bandsearch'] = True
+            save_logsList (logs, self.logPath)
 
-    def get_lines (self,):
-        with open (self.path_line_visual, 'r', encoding = 'utf-8') as f:
-            linesDict = json.load (f)
+    #def get_lines (self,):
+    #    with open (self.path_line_visual, 'r', encoding = 'utf-8') as f:
+    #        linesDict = json.load (f)
 
-        return linesDict
+    #    return linesDict
     
     #-------------------------------------------------------
     # バンドサーチの結果（BandKukans）から、
@@ -340,7 +343,8 @@ class EBSDClass:
             'jpn' : '交点からバンド生成'}[lang],
                             key = 'add_bands_intersec')
         if flg:
-            addBandsFrom4Bands ()
+            logs = addBandsFrom4Bands ()
+            save_logsList (logs, self.logPath)
             st.session_state['lines_for_display'] =\
                         self.get_lines_for_display ()
         return flg
@@ -363,9 +367,7 @@ class EBSDClass:
         _ = st.data_editor (df, hide_index = True,
                             num_rows = 'fixed',
                             key = 'monitor',
-                            disabled = self.cols,
-                            #height = 45 * len (df)
-                            )
+                            disabled = self.cols)
         
     def search_deleted_rows (self, df, newDf):
         indices = []
@@ -376,16 +378,23 @@ class EBSDClass:
                     indices.append (idx - 1)
         return indices
 
+    #----------------------------------------------------
+    # 表示されているデータ表変更検知（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
+    # df : 表示データ表, newDf : data_editorの出力
+    #----------------------------------------------------
     def judge_changed_df (self, df, newDf):
         flg_len = len (df) < len (newDf)
+        # 行の追加
         if flg_len:
             newDf = newDf.loc[:len (df)]
             return None, None, [], flg_len
         
+        # 行の削除
         indices = self.search_deleted_rows (df, newDf)
         if len (indices) > 0:
             return None, None, indices, flg_len
 
+        # 行の変更
         idx_changed = None; col_changed = None
         for col in df.columns:
             olds = np.array (df[col].tolist())
@@ -398,6 +407,10 @@ class EBSDClass:
 
         return idx_changed, col_changed, indices, flg_len
 
+    #----------------------------------------------------
+    # バンド追加処理（xydata: 2次微分画像のクリック座標）
+    # 
+    #----------------------------------------------------
     def addBandThetaRho (self, xydata):
         res = ''
         if xydata is not None:
@@ -405,6 +418,7 @@ class EBSDClass:
             res = addBand_theta_rho (theta, rho)
             st.session_state['lines_for_display'] = self.get_lines_for_display ()
         return res
+    
     #----------------------------------------------------
     # データ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # 追加、行削除、数値変更 (θ, ρ_begin, ρ_end, ρ_center)
@@ -448,7 +462,8 @@ class EBSDClass:
                 rhomin = new_df.at[idx, 'ρ_begin']
                 rhomax = new_df.at[idx, 'ρ_end']
                 removeBands ([idx])
-                addBand_theta_edges (theta, rhomin, rhomax)
+                logs = addBand_theta_edges (theta, rhomin, rhomax)
+                save_logsList(logs, self.logPath)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
 
         if added | doneIntsec:
@@ -526,3 +541,19 @@ class EBSDClass:
         
         if len (ans) > 0:
             update_params (params = ans, path = self.paramsPath)
+
+    def display_log (self,):
+        lang = st.session_state['lang']
+        if os.path.exists (self.logPath):
+            with open (self.logPath, 'r', encoding = 'utf-8') as f:
+                st.download_button (
+                    {'eng' : 'Download log file',
+                     'jpn' : 'logファイルダウンロード'}[lang],
+                     data = f,
+                     file_name = 'log_ebsd.txt',
+                     mime = 'text/plain', key = 'ebsd_log')
+        
+            with open (self.logPath, 'r', encoding = 'utf-8') as f:
+                text = f.read ()
+            st.text_area ('log', text, height = 400,
+                    label_visibility = 'hidden')
