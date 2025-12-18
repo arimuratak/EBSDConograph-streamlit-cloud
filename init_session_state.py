@@ -57,4 +57,15 @@ def build_session_state ():
         st.session_state['res_clicked'] = None
     if 'use_band_width' not in st.session_state:
         st.session_state['use_band_width'] = None
-    
+    if 'menu_list_img' not in st.session_state:
+        st.session_state['menu_list_img'] = None
+    if 'menu_list_text' not in st.session_state:
+        st.session_state['menu_list_text'] = None
+    if 'prev_idx' not in st.session_state:
+        st.session_state['prev_idx'] = None
+    if 'prev_col' not in st.session_state:
+        st.session_state['prev_col'] = None
+    if 'edit_mode' not in st.session_state:
+        st.session_state['edit_mode'] = None
+    if 'num_trial' not in st.session_state:
+        st.session_state['num_trial'] = None

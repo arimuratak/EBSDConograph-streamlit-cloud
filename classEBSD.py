@@ -1,21 +1,19 @@
 import os
 import shutil
 import numpy as np
-import json
+import random
 import pandas as pd
 import cv2
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
-import sys
-import time
-from io import StringIO
-import contextlib
 from dataIO import fig2img, cvtPos, update_params, \
     read_params, is_numeric, save_logsList
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
         addBand_theta_edges, addBand_theta_rho
+random.seed (2025)
 
 class EBSDClass:
     def __init__(self,):
@@ -28,6 +26,7 @@ class EBSDClass:
         self.H = None
         self.W = None
         self.cols = ['idx', 'score', 'θ', 'ρ_center', 'ρ_begin', 'ρ_end']
+        self.cols_tr = self.cols[2:]
         self.param_names = [
             'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
             'thred', 'MinCorrelation',
@@ -63,13 +62,10 @@ class EBSDClass:
             df = self.get_lines_for_display ()
             st.session_state['lines_for_display'] = df
             st.session_state['just_after_bandsearch'] = True
+            st.session_state['prev_idx'] = -100
+            st.session_state['prev_col'] = ''
             save_logsList (logs, self.logPath)
-
-    #def get_lines (self,):
-    #    with open (self.path_line_visual, 'r', encoding = 'utf-8') as f:
-    #        linesDict = json.load (f)
-
-    #    return linesDict
+            st.session_state['num_trial'] = str (random.randint (0, 1000))
     
     #-------------------------------------------------------
     # バンドサーチの結果（BandKukans）から、
@@ -88,6 +84,8 @@ class EBSDClass:
             df['rho_end'].append (band.edge_rhos[1])
 
         return pd.DataFrame (df)
+
+
 
     #-------------------------------------------------------
     # バンドサーチの結果（BandKukans）から、
@@ -139,9 +137,16 @@ class EBSDClass:
         df['ρ_begin'] = df['2nd_xy1'].apply (lambda x: x[1])
         df['ρ_end'] = df['2nd_xy2'].apply (lambda x: x[1])
         df['ρ_center'] = (df['ρ_begin'] + df['ρ_end']) / 2
+        
         return df
-    
-    def display_ebsd (self, img = None, needScale = False):       
+
+    #---------------------------------------------------------
+    # EBSD画像へのバンド番号挿入
+    # img : 画像, xys : バンド線の座標（x1, y1）, (x2, y2)
+    # idx : 番号
+    # imgのinstanceで、st.plot or st.imageを判断
+    #---------------------------------------------------------    
+    def display_ebsd (self, img = None):       
         if img is None:
             path = st.session_state['imgPath']
             
@@ -151,11 +156,16 @@ class EBSDClass:
             img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
         
         with st.container(border = True):
-            if needScale:
+            if isinstance (img, Figure):
                 st.pyplot (img)
             else:
                 st.image (img)
 
+    #---------------------------------------------------------
+    # EBSD画像へのバンド番号挿入
+    # img : 画像, xys : バンド線の座標（x1, y1）, (x2, y2)
+    # idx : 番号
+    #---------------------------------------------------------
     def put_line_index (self, img, xys, idx):
         H, W, _ = img.shape
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -181,7 +191,8 @@ class EBSDClass:
                     lineType = cv2.LINE_AA)
 
     #---------------------------------------------------------
-    # EBSD画像へのバンド線描画 (edge, center)
+    # EBSD画像へのバンド線描画 (edge, center, 番号)
+    # selsの入力で選択
     #---------------------------------------------------------
     def draw_lines_ebsd (self, img, sels = ['edge', 'center']):
         H, W, _ = img.shape
@@ -192,8 +203,6 @@ class EBSDClass:
         fig = plt.figure ()
         ax = fig.add_subplot (1,1,1)
         for _, row in df.iterrows():
-            idx = row['idx']
-            xys_center = (row['center_xy1'],row['center_xy2'])
             if 'edge' in sels:
                 plt.plot (
                     [row['edge1_xy1'][0],row['edge1_xy2'][0]],
@@ -209,7 +218,9 @@ class EBSDClass:
                     [row['center_xy1'][1],row['center_xy2'][1]],
                     c = 'y')
             if 'number' in sels:
-                self.put_line_index (img, list (xys_center), idx)
+                idx = row['idx']
+                xys_center = [row['center_xy1'], row['center_xy2']]
+                self.put_line_index (img, xys_center, idx)
             ax.imshow (img)
             step = 50
             ax.set_xticks (np.arange (0, W + 1, step))
@@ -217,30 +228,20 @@ class EBSDClass:
             plt.tight_layout ()
         return fig
     
+    #---------------------------------------------------------
+    # バンド線付きEBSD画像の表示（center, edges, 番号）
+    #---------------------------------------------------------
     def display_ebsd_with_band (self,):
         sels = self.ebsd_line_display_menu ()
         path = 'result/out.rescaled.png'
         img = cv2.imread (path)
         img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
         fig = self.draw_lines_ebsd (img, sels) # EBSD画像バンド線追加
-        self.display_ebsd (fig, needScale = True)
+        self.display_ebsd (fig)
     
-    def add_scale_2nd (self, img):
-        H, W, _ = img.shape
-        fig, ax = plt.subplots ()
-        ax.imshow (img)
-        #ax.set_xlabel("X (pixels)", fontsize=12)
-        #ax.set_ylabel("Y (pixels)", fontsize=12)
-
-        step_X = 25
-        step_y = 50
-        ax.set_xticks (np.arange (0, 180 + 1, step_X))
-        ax.set_yticks (np.arange (int (- H / 2), int (H / 2) + 1, step_y))
-        plt.tight_layout ()
-
-        return fig
-
-
+    #---------------------------------------------------------
+    # 2次微分画像へのバンド番号の挿入
+    #---------------------------------------------------------
     def put_line_index_2nd (self, img, xy, idx):
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.5
@@ -255,12 +256,9 @@ class EBSDClass:
                      font_color, font_thickness,
                      lineType = cv2.LINE_AA)
 
-    def pix2scale_y (self, pix):
-            return '{:.0f}'.format (pix - int (self.H / 2))
-        
-    def pix2scale_x (self, pix):
-            return '{:.0f}'.format (pix * 180 / self.W)
-
+    #---------------------------------------------------------
+    # バンド線付き2次微分画像の生成
+    #---------------------------------------------------------
     def image_2nd_der_with_line (self,):
         img = cv2.imread ('result/out.2nd_derivative.png')
         img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
@@ -297,6 +295,10 @@ class EBSDClass:
         #plt.savefig ('test.png')
         return fig, ax
 
+    #---------------------------------------------------------
+    # バンド線付き2次微分画像の表示＆クリック情報出力
+    # 
+    #---------------------------------------------------------
     def display_2nd_der (self, key = '2ndDerivative'):
         fig, ax = self.image_2nd_der_with_line ()
         with st.container(border = True):
@@ -308,6 +310,10 @@ class EBSDClass:
         
         return res, ax_px, img, ax
 
+    #---------------------------------------------------------
+    # バンド線付き2次微分画像の表示＆クリック情報出力
+    # 
+    #---------------------------------------------------------
     def display_clicked_point (self, key = '2ndDerivative'):
         res, ax_px, img, ax = self.display_2nd_der(key)
         xydata = None
@@ -319,6 +325,10 @@ class EBSDClass:
             #クリックされても範囲外であれば、xydataはNone
         return xydata, is_clicked, res
 
+    #---------------------------------------------------------
+    # バンド線付きEBSD画像の描画選択
+    # （center, edges, index）
+    #---------------------------------------------------------
     def ebsd_line_display_menu (self,):
         edge, center, number = st.columns (3)
         sels = []
@@ -335,7 +345,10 @@ class EBSDClass:
                 sels.append ('number')
         
         return sels
-    
+
+    #---------------------------------------------------------
+    # 交点からのバンド生成
+    #---------------------------------------------------------
     def add_bands_intersection (self,):
         lang = st.session_state['lang']
         flg = st.button (
@@ -349,26 +362,67 @@ class EBSDClass:
                         self.get_lines_for_display ()
         return flg
 
-    def df_for_edit (self,):
+    #---------------------------------------------------------
+    # バンドデータ表の表示と編集
+    # df：編集前, newDf : 編集後
+    #---------------------------------------------------------
+    def to_str (self, df):
+        df['score'] = df['score'].apply (lambda x: '{:4f}'.format(x))
+        df['θ'] = df['θ'].apply (lambda x: '{:.4f}'.format(x))
+        df['ρ_begin'] = df['ρ_begin'].apply (lambda x: '{:.4f}'.format(x))
+        df['ρ_end'] = df['ρ_end'].apply (lambda x: '{:.4f}'.format(x))
+        df['ρ_center'] = df['ρ_center'].apply (lambda x: '{:.4f}'.format(x))
+        return df
+    
+    def to_float (self, df):
+        df['score'] = df['score'].apply (float)
+        df['θ'] = df['θ'].apply (float)
+        df['ρ_begin'] = df['ρ_begin'].apply (float)
+        df['ρ_end'] = df['ρ_end'].apply (float)
+        df['ρ_center'] = df['ρ_center'].apply (float)
+        return df
+
+    def numerical_check (self, df):
+        flg = True
+        for col in self.cols_tr:
+            flg &= all ([is_numeric (v) for v in df[col].tolist()])
+        return flg
+
+    def df_for_edit (self, mode = ''):
         df = st.session_state['lines_for_display']
         df = df.loc[:, self.cols]
-        
+        df = self.to_str (df)
+        key = 'edit' + st.session_state['num_trial'] + mode
         newDf = st.data_editor (df, hide_index = True,
                             num_rows = 'dynamic',
-                            key = 'edit',
+                            key = key,
                             #disabled = self.cols
                             disabled = ['idx', 'score'])
+
+        if not self.numerical_check (newDf):
+            st.write ('Please input numerical value!!!')
+            newDf = df
+        
+        df = self.to_float (df)
+        newDf = self.to_float (newDf)
         return df, newDf
 
+    #---------------------------------------------------------
+    # バンドデータ表の表示（編集不可）
+    #---------------------------------------------------------
     def df_for_monitor (self,):
         df = st.session_state['lines_for_display']
         df = df.loc[:, self.cols]
+        df = self.to_str (df)
         
         _ = st.data_editor (df, hide_index = True,
                             num_rows = 'fixed',
                             key = 'monitor',
                             disabled = self.cols)
         
+    #---------------------------------------------------------
+    # バンドデータ表の行削除検知
+    #---------------------------------------------------------
     def search_deleted_rows (self, df, newDf):
         indices = []
         if len (newDf) < len (df):
@@ -437,7 +491,7 @@ class EBSDClass:
         with col1:
             doneIntsec = self.add_bands_intersection ()
         
-        old_df, new_df = self.df_for_edit ()
+        old_df, new_df = self.df_for_edit (st.session_state['edit_mode'])
         # idx, col : 変更された行番号とカラム名
         # indices : 削除された行番, flg : 行が追加された(True)        
         idx, col, indices, flg_expanded = self.judge_changed_df(old_df, new_df)
@@ -451,6 +505,7 @@ class EBSDClass:
         elif len (indices) > 0:
             removeBands (indices)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
+            st.session_state['edit_mode'] = 'deleted'
             
         elif (idx is not None) & (col is not None):
             if col == 'ρ_center':
@@ -465,21 +520,28 @@ class EBSDClass:
                 logs = addBand_theta_edges (theta, rhomin, rhomax)
                 save_logsList(logs, self.logPath)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
+            st.session_state['edit_mode'] = 'changed' + str (idx) + col
 
-        if added | doneIntsec:
-            with col2:
-                if st.button ({
-                    'eng' : 'To feedback band added to image, please press button',
-                    'jpn' : 'バンド追加を画像へ反映するため、このボタンを押してください'}[lang]):
-                    st.write ({'eng' : 'Feedback complete!!',
-                               'jpn' : '反映完了!!'}[lang])
-
-        if (idx is not None) | (col is not None) | (len (indices) > 0):
-            with col2:
-                if st.button ({'eng' : 'Fix data change??',
-                               'jpn' : 'データ変更を確定しますか？'}[lang]):
-                    st.write ({'eng' : 'Complete!!',
-                               'jpn' : '確定しました!!'}[lang])      
+        #if added | doneIntsec:
+        #if doneIntsec:
+        #    with col2:
+        #        if st.button ({
+        #            'eng' : 'To feedback band added to image, please press button',
+        #            'jpn' : 'バンド追加を画像へ反映するため、このボタンを押してください'}[lang]):
+        #            st.write ({'eng' : 'Feedback complete!!',
+        #                       'jpn' : '反映完了!!'}[lang])
+        
+        #if ((idx is not None) and (st.session_state['prev_idx'] != idx) ) | (
+        #     (col is not None) and (st.session_state['prev_col'] != col) )| (len (indices) > 0):
+        #    with col2:
+        #        if st.button ({'eng' : 'Fix data change??',
+        #                       'jpn' : 'データ変更を確定しますか？'}[lang]):
+        #            st.session_state['prev_idx'] = idx
+        #            st.session_state['prev_col'] = col
+        #            print ('######################')
+        #            print (idx, col, st.session_state['prev_idx'], st.session_state['prev_col'])
+        #            st.write ({'eng' : 'Complete!!',
+        #                       'jpn' : '確定しました!!'}[lang])      
         return (idx is not None) | (col is not None)
     
     def read_params (self,):
