@@ -391,7 +391,7 @@ class EBSDClass:
     def df_for_edit (self, mode = ''):
         df = st.session_state['lines_for_display']
         df = df.loc[:, self.cols]
-        #df = self.to_str (df)
+        df = self.to_str (df)
         key = 'edit' + st.session_state['num_trial'] + mode
         newDf = st.data_editor (df, hide_index = True,
                             num_rows = 'dynamic',
@@ -403,8 +403,8 @@ class EBSDClass:
             st.write ('Please input numerical value!!!')
             newDf = df
         
-        #df = self.to_float (df)
-        #newDf = self.to_float (newDf)
+        df = self.to_float (df)
+        newDf = self.to_float (newDf)
         return df, newDf
 
     #---------------------------------------------------------

@@ -338,4 +338,5 @@ if __name__ == '__main__':
                         objCono.display_result ()
 
                     elif tab_name == 'Conograph log':
+                        objCono.request_log ()
                         objCono.display_log ()
