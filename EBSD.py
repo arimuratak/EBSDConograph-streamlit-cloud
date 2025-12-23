@@ -481,13 +481,13 @@ def printAll():
     global BandKukans
     global shape
     global ArraySinogramErrors
-    with open(name_pickle, 'wb') as f:
-        pickle.dump(PC, f)
-        pickle.dump(thetas, f)
-        pickle.dump(rhos, f)
-        pickle.dump(BandKukans, f)
-        pickle.dump(shape, f)
-        pickle.dump(ArraySinogramErrors, f)
+    #with open(name_pickle, 'wb') as f:
+    #    pickle.dump(PC, f)
+    #    pickle.dump(thetas, f)
+    #    pickle.dump(rhos, f)
+    #    pickle.dump(BandKukans, f)
+    #    pickle.dump(shape, f)
+    #    pickle.dump(ArraySinogramErrors, f)
     printShapes(BandKukans, shape, 'result/out.shapes.json') # 可視化用テキストファイル出力
     printRhoTheta(BandKukans, 'result/out.rho_theta.txt') # θ, ρ_begin, ρ_end
     printSphericalCoordinates(BandKukans, 'result/data0.txt', flg = 0) # 抽出したバンドエッジ[rho_1, rho_2, theta]をテキスト出力

@@ -232,7 +232,13 @@ class EBSDClass:
     # バンド線付きEBSD画像の表示（center, edges, 番号）
     #---------------------------------------------------------
     def display_ebsd_with_band (self,):
-        sels = self.ebsd_line_display_menu ()
+        lang = st.session_state['lang']
+        col1, col2 = st.columns (2)
+        with col1:
+            st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
+                        'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
+        with col2:   
+            sels = self.ebsd_line_display_menu ()
         path = 'result/out.rescaled.png'
         img = cv2.imread (path)
         img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)

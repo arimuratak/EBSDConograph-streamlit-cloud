@@ -296,10 +296,8 @@ if __name__ == '__main__':
             for tab, tab_name in zip (tabs, menus):
                 with tab:
                     if tab_name in [
-                            'Bandsearch result (EBSD img)',
-                            'バンドサーチ結果 (EBSD画像)']:
-                        st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
-                                    'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
+                                    'Bandsearch result (EBSD img)',
+                                    'バンドサーチ結果 (EBSD画像)']:
                         objEBSD.display_ebsd_with_band ()
 
                     elif tab_name in [
@@ -319,8 +317,8 @@ if __name__ == '__main__':
                             st.session_state['unix_time'] != str (res['unix_time'])):
                             with col2:
                                 _ = st.button (
-                                    {'eng' : 'Push button to fix band adding!!!',
-                                     'jpn' : 'バンド追加確定！！'}[lang],
+                                    {'eng' : 'Click to fix band adding',
+                                     'jpn' : 'バンド追加確定のためクリック'}[lang],
                                      key = 'conf_add_band')
                                                 
                     elif tab_name == 'EBSD log':

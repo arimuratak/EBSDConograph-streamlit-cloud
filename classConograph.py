@@ -228,7 +228,7 @@ class Conograph:
             labels = list (self.label2key.keys())
 
             with st.container (border = True):
-                st.subheader ('Detail')
+                #st.subheader ('Detail')
                 for labelSel in labels:   
                     labelKey = self.label2key[labelSel]
                     resultKey = resultNum[labelKey]
