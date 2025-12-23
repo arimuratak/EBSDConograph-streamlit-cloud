@@ -402,7 +402,7 @@ class EBSDClass:
         if not self.numerical_check (newDf):
             st.write ('Please input numerical value!!!')
             newDf = df
-        
+
         df = self.to_float (df)
         newDf = self.to_float (newDf)
         return df, newDf
@@ -520,28 +520,14 @@ class EBSDClass:
                 logs = addBand_theta_edges (theta, rhomin, rhomax)
                 save_logsList(logs, self.logPath)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
-            st.session_state['edit_mode'] = 'changed' + str (idx) + col
-
-        #if added | doneIntsec:
-        #if doneIntsec:
-        #    with col2:
-        #        if st.button ({
-        #            'eng' : 'To feedback band added to image, please press button',
-        #            'jpn' : 'バンド追加を画像へ反映するため、このボタンを押してください'}[lang]):
-        #            st.write ({'eng' : 'Feedback complete!!',
-        #                       'jpn' : '反映完了!!'}[lang])
+            st.session_state['edit_mode'] = 'changed' + str (idx) + col + str (random.choice(list(range(1,1000))))
         
-        #if ((idx is not None) and (st.session_state['prev_idx'] != idx) ) | (
-        #     (col is not None) and (st.session_state['prev_col'] != col) )| (len (indices) > 0):
-        #    with col2:
-        #        if st.button ({'eng' : 'Fix data change??',
-        #                       'jpn' : 'データ変更を確定しますか？'}[lang]):
-        #            st.session_state['prev_idx'] = idx
-        #            st.session_state['prev_col'] = col
-        #            print ('######################')
-        #            print (idx, col, st.session_state['prev_idx'], st.session_state['prev_col'])
-        #            st.write ({'eng' : 'Complete!!',
-        #                       'jpn' : '確定しました!!'}[lang])      
+        if (idx is not None) & (col is not None):
+            with col2:
+                st.button ({
+                    'eng' : 'Click to fix data change',
+                    'jpn' : 'データ変更確定のためクリック'}[lang])
+              
         return (idx is not None) | (col is not None)
     
     def read_params (self,):

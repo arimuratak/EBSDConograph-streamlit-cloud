@@ -69,3 +69,26 @@ def build_session_state ():
         st.session_state['edit_mode'] = None
     if 'num_trial' not in st.session_state:
         st.session_state['num_trial'] = None
+    if 'BAND_WIDTH_MIN' not in st.session_state:
+        st.session_state['BAND_WIDTH_MIN'] = None
+    if 'BAND_WIDTH_MAX' not in st.session_state:
+        st.session_state['BAND_WIDTH_MAX'] = None
+    if 'PC' not in st.session_state:
+        st.session_state['PC'] = None
+    if 'thetas' not in st.session_state:
+        st.session_state['thetas'] = None
+
+
+
+"""
+global PC      # project centerの座標（3次元ベクトル, スケール変換後）
+    global Circle  # EBSD画像が円かどうか
+    global rhos # Hough変換のrho座標を格納した配列
+    global thetas # Hough変換のtheta座標を格納した配列
+    global BandKukans
+    global shape #　EBSD画像の縦横サイズ(スケール変換後)
+    global ArrayDeriv2 # Hough変換の rho方向2次微分値を格納した配列
+    global ArraySinogramErrors  # Hough変換の誤差見積もり値を格納した配列
+    global BAND_WIDTH_MIN
+    global BAND_WIDTH_MAX
+    """

@@ -32,6 +32,8 @@ class Conograph:
             'indexing_before_refinement' : 'Indexing with the parameters before refinement',
             'indexing_after_refinement' : 'Indexing with the parameters after refinement'}
 
+        self.label2key = {v:k for k,v in self.key2label.items()}
+
         self.cols_to_disp = {
             'lattice_const_before_refinement' : ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor'],
             'lattice_const_after_refinement' : [
@@ -52,7 +54,6 @@ class Conograph:
 
         
 
-        self.label2key = {v:k for k,v in self.key2label.items()}
 
         self.keys_lines = [
             'Buerger_lattice_basis_before_refinement',
@@ -191,7 +192,7 @@ class Conograph:
 
 
     def display_result (self,):
-        result = read_out_file (self.outPath)
+        result, fms_max = read_out_file (self.outPath)
 
         radius = result['rad_kikuchi']
         col_left, col_right = st.columns (2)
@@ -205,14 +206,18 @@ class Conograph:
         sel2lat = {v:k for k,v in summary.items()}
         selList = list (sel2lat.keys())
         col11, col12 = st.columns (2)
+        
         with col11:
             selected = st.selectbox (
                     'Select lattice pattern',
-                    ['-----'] + selList, key = 'select_lattice')
+                    selList,
+                    index = int (fms_max),
+                    key = 'select_lattice')
     
-        if selected in selList:
-            lat = sel2lat[selected]
-            resultLat = result[lat]
+        #if selected in selList:
+        lat = sel2lat[selected]
+        resultLat = result[lat]
+        if len (resultLat) > 0:
             numbers = list (resultLat.keys())
             with col12:
                 numSel = st.selectbox (
@@ -222,27 +227,27 @@ class Conograph:
             resultNum = resultLat[numSel]
             labels = list (self.label2key.keys())
 
-            labelSel = st.selectbox (
-                    'Select item to display',
-                    labels, key = 'select_label')
-                
-            labelKey = self.label2key[labelSel]
-            resultKey = resultNum[labelKey]
-            if labelKey in self.keys_lines:
-                text = '  \n'.join (resultKey)
-                st.markdown (text)
-            elif labelKey in self.cols_to_disp:
-                if ('indexing_' in labelKey) | (labelKey == 'lattice_const_after_refinement'):
-                    if isinstance (resultKey, list):
-                        n = int (len (resultKey[0].split(',')) == 12)
+            with st.container (border = True):
+                st.subheader ('Detail')
+                for labelSel in labels:   
+                    labelKey = self.label2key[labelSel]
+                    resultKey = resultNum[labelKey]
+                    st.markdown ('**' + labelSel + '**')
+                    if labelKey in self.keys_lines:
+                        text = '  \n'.join (resultKey)
+                        st.markdown (text)
+                    elif labelKey in self.cols_to_disp:
+                        if ('indexing_' in labelKey) | (labelKey == 'lattice_const_after_refinement'):
+                            if isinstance (resultKey, list):
+                                n = int (len (resultKey[0].split(',')) == 12)
+                            else:
+                                n = int (len (resultKey.split(',')) == 12)
+                            cols = self.cols_to_disp[labelKey][n]
+                        else:
+                            cols = self.cols_to_disp[labelKey]
+                        self.display_as_df (cols, resultKey)
                     else:
-                        n = int (len (resultKey.split(',')) == 12)
-                    cols = self.cols_to_disp[labelKey][n]
-                else:
-                    cols = self.cols_to_disp[labelKey]
-                self.display_as_df (cols, resultKey)
-            else:
-                st.write (resultKey)
+                        st.write (resultKey)
 
     def set_data_0or1 (self, use_band_width):
         nums = ['0 : use band center', '1 : use band edges']

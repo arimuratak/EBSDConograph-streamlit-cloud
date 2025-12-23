@@ -208,7 +208,6 @@ class MainClass:
         elif st.session_state['doneEBSD']:
             menuList = [menu0]
         return menuList
-        
 
     # ----------------------------------------------------
     # サイドバーのタブ設定 （バンドサーチ、Conograph結果）
@@ -268,7 +267,6 @@ if __name__ == '__main__':
                         res = st.session_state['res_clicked']
                         edited = objEBSD.manage_data_editor (xydata, res)
                         if edited:
-                                #with st.container (border = True):
                             st.write ({
                                     'eng' : '＜＜For confirmation after edit＞＞',
                                     'jpn' : '＜＜編集後の確認用＞＞'}[lang])

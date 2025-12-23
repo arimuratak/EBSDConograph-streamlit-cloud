@@ -3,6 +3,7 @@ import io
 import re
 import zipfile
 from PIL import Image
+import numpy as np
 import pandas as pd
 
 def zip_folder(folder_path):
@@ -16,6 +17,9 @@ def zip_folder(folder_path):
     zip_buffer.seek(0)
     return zip_buffer
 
+#------------------------------------------------------
+# 2次微分画像の画像領域(fig)の原点と幅高さ(x0,y0,w,h)を取得
+#------------------------------------------------------
 def fig2img (fig, ax):
     fig.canvas.draw()                              # レンダリング
     renderer = fig.canvas.get_renderer()
@@ -41,8 +45,10 @@ def fig2img (fig, ax):
     "h":  ax_bbox_canvas["h"]  * sy}
     return img, ax_px
 
+#------------------------------------------------------
 # クリックされた２次微分画像の座標を(θ,ρ)に変換
 # クリックされた地点が範囲外であればNoneを返す
+#------------------------------------------------------
 def cvtPos (res, ax_px, ax, img_h):
     cx, cy_top = res["x"], res["y"]
     cy = img_h - cy_top  # 左下原点に反転
@@ -166,7 +172,7 @@ def read_kikuchi_radius (path):
     return value
 
 def read_cono_summary (path = 'result/out.txt'):
-    ans = {}
+    ans = {}; fms = []
     nums = ['({})'.format(i) for i in range (1,15)]
     with open (path, 'r', encoding = 'utf-8') as f:
         for line in f.readlines():
@@ -174,8 +180,10 @@ def read_cono_summary (path = 'result/out.txt'):
                 line = line.strip()
                 lattice = line.split (' ')[1]
                 ans[lattice] = line.strip()
+                fm = line.split(' ')[-1].strip('(').strip(')')
+                fms.append (float (fm))
             if len (ans) == 14: break
-    return ans
+    return ans, np.argmax (fms)
 
 def put_separate (text):
     return re.sub(r'(?<=\d)\s+(?=[\-\d])', ', ', text)
@@ -185,7 +193,7 @@ def read_out_file(path):
     candNo = None
     ans = {}
     ans['rad_kikuchi'] = read_kikuchi_radius (path)
-    ans['summary'] = read_cono_summary (path)
+    ans['summary'], fms_max = read_cono_summary (path)
     
     with open(path, 'r' ,encoding = 'utf-8') as f:
         lines = [line.strip() for line in f.readlines()]
@@ -243,7 +251,7 @@ def read_out_file(path):
                 vsList.append (put_separate (lines.pop(0)))
             ans[lattice][candNo]['indexing_after_refinement'] = vsList
 
-    return ans
+    return ans, fms_max
 
 def read_input_txt (names, path = 'input/input.txt'):
     with open (path, 'r', encoding = 'utf-8') as f:
@@ -270,7 +278,7 @@ def save_logsList (logs, path):
         f.write ('\n'.join (logs))
 
 if __name__ == '__main__':
-    names = [
+    """names = [
             'use_band_width', 'searchLevel', 'range_deg',
             'tolerance_unit_cell',
             'tolerance_vector_length_gain',
@@ -279,4 +287,8 @@ if __name__ == '__main__':
             'axisRhombohedralSym', 'axisMonoclinicSym',
             'latexStyle']
     ans = read_input_txt (names = names[1:])
+    print (ans)"""
+
+    ans, idx = read_out_file ('result/out.txt')
     print (ans)
+    print (idx)

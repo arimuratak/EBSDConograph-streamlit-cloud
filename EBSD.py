@@ -675,6 +675,7 @@ def run():
         filename = file.path     # EBSD画像ファイルの　path 
         PC0 = params.PC0         # 下式でproject centerの座標（3次元ベクトル, スケール変換前）は求められるとする:
         Circle = params.Circle   # True: EBSD画像は円, False: 四角
+        st.session_state['Circle'] = Circle
         #print (PC0, Circle)
         # 画像のリスケール
     
@@ -705,12 +706,15 @@ def run():
         # band width min maxを画像サイズから再計算
         BAND_WIDTH_MIN = params.BAND_WIDTH_MIN * max(image.shape)
         BAND_WIDTH_MAX = params.BAND_WIDTH_MAX * max(image.shape)
+        st.session_state['BAND_WIDTH_MIN'] = BAND_WIDTH_MIN
+        st.session_state['BAND_WIDTH_MAX'] = BAND_WIDTH_MAX
         print ('updated band width min : {:.2f} px, max : {:.2f} px'.format(BAND_WIDTH_MIN, BAND_WIDTH_MAX))
         logs.append ('updated band width min : {:.2f} px, max : {:.2f} px'.format(BAND_WIDTH_MIN, BAND_WIDTH_MAX))
 
         shape = image.shape
         imsave('result/out.rescaled.png', exposure.rescale_intensity(image, in_range='image', out_range='uint8').astype(np.uint8))
         PC = [PC0[1]*image.shape[0], PC0[0]*image.shape[1], PC0[2]*image.shape[0]] # PCの座標（スケール変換後）
+        st.session_state['PC'] = PC
         print(f'  Size: {shape} px', flush=True)
         print(f'  Projection center: {PC} px', flush=True)
         print(f'  EBSD image is a circle?: {Circle}', flush=True)
@@ -722,6 +726,7 @@ def run():
         # ラドン変換
         print('Radon transform...', flush=True); logs.append ('Radon transform...')
         thetas = np.linspace(0., 180., max(image.shape), endpoint=False) # thetaのbin幅 = 180./画像の横幅・縦幅の大きい方, とする。
+        st.session_state['thetas'] = thetas
         sinogram = radon(image, theta=thetas, circle=Circle)              # ラドン変換
         imsave('result/out.radon.png', exposure.rescale_intensity(sinogram, in_range='image', out_range='uint8').astype(np.uint8))
         print(f'  Size: {sinogram.shape}', flush=True)
@@ -757,6 +762,7 @@ def run():
                 ArrayDeriv2[n][k] = coef3[1]*2.0
                 ArrayDeriv1[n][k] = coef3[2]
                 ArraySmth[n][k] = coef3[3]
+        
         imsave('result/out.1st_derivative.png', exposure.rescale_intensity(ArrayDeriv1, in_range='image', out_range='uint8').astype(np.uint8))
         imsave('result/out.2nd_derivative.png', exposure.rescale_intensity(ArrayDeriv2, in_range='image', out_range='uint8').astype(np.uint8))
         imsave(name_ArrayDeriv2, ArrayDeriv2)
@@ -820,6 +826,7 @@ def run():
         # 結果を出力
         printAll()
         #print ('all process time {}'.format(time_ed - time_st))
+        st.session_state['rhos'] = rhos
         st.session_state['BandKukans'] = BandKukans
         st.session_state['shape'] = shape
         st.session_state['ArrayDeriv2'] = ArrayDeriv2
@@ -839,8 +846,8 @@ def run():
 #| ex) removeBands([2,0,4])  # 0,2,4番目のバンドを消去する
 #|
 def removeBands(indices):
-    global BandKukans
-    #BandKukans = st.session_state['BandKukans']
+    #global BandKukans
+    BandKukans = st.session_state['BandKukans']
     if BandKukans is None: return
     for i in sorted(indices, reverse=True):
         del BandKukans[i]
@@ -851,7 +858,11 @@ def removeBands(indices):
 #| BandKukans[i]のバンド中心rhoを変更する(バンドセンター以外の情報は変更なし)
 #|
 def editBandCenter(rho, i):
-    global PC, BandKukans, shape, ArrayDeriv2
+    #global PC, BandKukans, shape, ArrayDeriv2
+    PC = st.session_state['PC']
+    BandKukans = st.session_state['BandKukans']
+    shape = st.session_state['shape']
+    ArrayDeriv2 = st.session_state['ArrayDeriv2']
     if ArrayDeriv2 is None: return
     BandKukans[i].setCenter(PC, shape, rho)
     st.session_state['BandKukans'] = BandKukans
@@ -911,6 +922,13 @@ def findAll(band, BandKukans, dtheta):
 # バンド中心（角度θ、中心ρ）からバンドを生成する
 def getBand_theta_rho(theta0, rho0, BAND_WIDTH_MIN, BAND_WIDTH_MAX):
     global PC, Circle, rhos, thetas, BandKukans, shape, ArrayDeriv2
+    PC = st.session_state['PC']
+    Circle = st.session_state['Circle']
+    rhos = st.session_state['rhos']
+    thetas = st.session_state['thetas']
+    BandKukans = st.session_state['BandKukans']
+    shape = st.session_state['shape']
+    ArrayDeriv2 = st.session_state['ArrayDeriv2']
     if ArrayDeriv2 is None: return
     rho_o = len(rhos)//2
     itheta = getNearestIndex(thetas, theta0)
@@ -951,6 +969,14 @@ def getBand_theta_rho(theta0, rho0, BAND_WIDTH_MIN, BAND_WIDTH_MAX):
 #|
 def getBand_theta_rhos(theta, rho1, rho2):
     global PC, Circle, rhos, thetas, BandKukans, shape, ArrayDeriv2
+    PC = st.session_state['PC']
+    Circle = st.session_state['Circle']
+    rhos = st.session_state['rhos']
+    thetas = st.session_state['thetas']
+    BandKukans = st.session_state['BandKukans']
+    shape = st.session_state['shape']
+    ArrayDeriv2 = st.session_state['ArrayDeriv2']
+    
     if ArrayDeriv2 is None: return
     # BandKukansの中からバンドの候補を探す
     itheta = getNearestIndex(thetas, theta)
@@ -975,6 +1001,8 @@ def getBand_theta_rhos(theta, rho1, rho2):
 def addBand_theta_rho(theta, rho):
     #global BandKukans
     BandKukans = st.session_state['BandKukans']
+    BAND_WIDTH_MIN = st.session_state['BAND_WIDTH_MIN']
+    BAND_WIDTH_MAX = st.session_state['BAND_WIDTH_MAX']
     # 同じバンドが既に存在する場合は何もしない
     if find(theta, rho, BandKukans) is not None:
         print('Failed: band already exists', file=sys.stderr, flush=True)
@@ -1048,6 +1076,7 @@ def getCrossing(band1, band2):
 #|
 def addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, MinCorrelation, newBands):
     global shape
+    shape = st.session_state['shape']
     size = len(BandKukans)
     image_o = [shape[0]//2, shape[1]//2]
     newBands.clear()
@@ -1099,6 +1128,9 @@ def addBandsFrom4BandsIn(BandKukans, BAND_WIDTH_MIN, BAND_WIDTH_MAX, MinCorrelat
 
 def addBandsFrom4Bands():
     global BandKukans
+    BandKukans = st.session_state['BandKukans']
+    BAND_WIDTH_MIN = st.session_state['BAND_WIDTH_MIN']
+    BAND_WIDTH_MAX = st.session_state['BAND_WIDTH_MAX']
     import params
     #params = set_params()
     newBands = []
