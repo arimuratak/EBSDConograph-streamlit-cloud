@@ -53,7 +53,9 @@ class EBSDClass:
         lang = st.session_state['lang']
         exec = st.button ({
             'eng' : 'Band search Run',
-            'jpn' : 'バンドサーチ実行'}[lang])
+            'jpn' : 'バンドサーチ実行'}[lang],
+            key = 'bandsearch_exec')
+        
         if exec:
             logs = run ()
             #st.session_state['uploaded'] = False
@@ -532,7 +534,8 @@ class EBSDClass:
             with col2:
                 st.button ({
                     'eng' : 'Click to fix data change',
-                    'jpn' : 'データ変更確定のためクリック'}[lang])
+                    'jpn' : 'データ変更確定のためクリック'}[lang],
+                    'edit_confirmed')
               
         return (idx is not None) | (col is not None)
     
@@ -549,7 +552,7 @@ class EBSDClass:
         for i, (pc, col) in enumerate (
                                 zip (PC0, [col1, col2, col3])):
             with col:
-                key = 'PC0_{}_{}'.format(i, param_name) 
+                key = 'PC0_{}_{}'.format(i, param_name)
                 pc = st.text_input (
                         key, PC0[i], key = key,
                         label_visibility = 'hidden')
@@ -568,7 +571,8 @@ class EBSDClass:
                     options, index = options.index(vstr),
                     key = name + param_name)
         else:
-            ans = st.text_input (name, vstr, key = name + param_name)
+            ans = st.text_input (name, vstr,
+                    key = name + param_name)
             if not is_numeric(ans):
                 st.write ('Please input numeric value!!')
 
@@ -578,7 +582,6 @@ class EBSDClass:
         lang = st.session_state['lang']
         params = read_params (self.param_names,
                             path = self.paramsPath)
-
         ans = {}
         with st.expander (
             {'eng' : 'Parameter menu',

@@ -108,7 +108,8 @@ class Conograph:
         uploaded_map = self.load_files ()
         lang = st.session_state['lang']
         if st.button ({'eng' : 'Conograph Run',
-                       'jpn':'Conograph実行'}[lang]):
+                       'jpn':'Conograph実行'}[lang],
+                       key = 'exec_conograph'):
             files = {}
             for fname, fobj in uploaded_map.items():
                 files[fname] = (fname, fobj,

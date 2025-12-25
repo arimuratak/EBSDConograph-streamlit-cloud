@@ -78,17 +78,34 @@ def build_session_state ():
     if 'thetas' not in st.session_state:
         st.session_state['thetas'] = None
 
-
-
-"""
-global PC      # project centerの座標（3次元ベクトル, スケール変換後）
-    global Circle  # EBSD画像が円かどうか
-    global rhos # Hough変換のrho座標を格納した配列
-    global thetas # Hough変換のtheta座標を格納した配列
-    global BandKukans
-    global shape #　EBSD画像の縦横サイズ(スケール変換後)
-    global ArrayDeriv2 # Hough変換の rho方向2次微分値を格納した配列
-    global ArraySinogramErrors  # Hough変換の誤差見積もり値を格納した配列
-    global BAND_WIDTH_MIN
-    global BAND_WIDTH_MAX
-    """
+def reset_session_state ():
+    if st.session_state['uploaded'] is None:
+        st.session_state['uploaded'] = False
+    if st.session_state['doneEBSD'] is None:
+        st.session_state['doneEBSD'] = False
+    if st.session_state['doneCono'] is None:
+        st.session_state['doneCono'] = False
+    #if st.session_state['file_name'] is None:
+    #    st.session_state['file_name'] = ''
+    if st.session_state['jobs_side'] is None:
+        st.session_state['jobs_side'] = []
+    if st.session_state['add_band'] is None:
+        st.session_state['add_band'] = False
+    if st.session_state['radio_index'] is None:
+        st.session_state['radio_index'] = 0
+    if st.session_state['enable_added_band'] is None:
+        st.session_state['enable_added_band'] = True
+    if st.session_state['just_after_bandsearch'] is None:
+        st.session_state['just_after_bandsearch'] = False
+    if st.session_state['unix_time'] is None:
+        st.session_state['unix_time'] = ''
+    #if st.session_state['param_name'] is None:
+    #    st.session_state['param_name'] = ''
+    if st.session_state['prev_idx'] is None:
+        st.session_state['prev_idx'] = -100
+    if st.session_state['prev_col'] is None:
+        st.session_state['prev_col'] = ''
+    if st.session_state['edit_mode'] is None:
+        st.session_state['edit_mode'] = ''
+    if st.session_state['num_trial'] is None:
+        st.session_state['num_trial'] = ''
