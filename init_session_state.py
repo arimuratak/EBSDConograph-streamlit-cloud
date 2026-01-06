@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 def build_session_state ():
     if 'lang' not in st.session_state:
@@ -77,6 +78,12 @@ def build_session_state ():
         st.session_state['PC'] = None
     if 'thetas' not in st.session_state:
         st.session_state['thetas'] = None
+    if 'flgs_disp' not in st.session_state:
+        st.session_state['fgls_disp'] = None
+    if 'edit_cnt' not in st.session_state:
+        st.session_state['edit_cnt'] = None
+    if 'flg_updated_this_run' not in st.session_state:
+        st.session_state['flg_updated_this_run'] = None
 
 def reset_session_state ():
     if st.session_state['uploaded'] is None:
@@ -109,3 +116,9 @@ def reset_session_state ():
         st.session_state['edit_mode'] = ''
     if st.session_state['num_trial'] is None:
         st.session_state['num_trial'] = ''
+    if st.session_state['fgls_disp'] is None:
+        st.session_state['fgls_disp'] = []
+    if st.session_state['lines_for_display'] is None:
+        st.session_state['lines_for_display'] = pd.DataFrame ()
+    if st.session_state['flg_updated_this_run'] is None:
+        st.session_state['flg_updated_this_run'] = False

@@ -49,6 +49,8 @@ if __name__ == '__main__':
                                 'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
                         xydata = st.session_state['xydata']
                         res = st.session_state['res_clicked']
+                        #st.session_state['flg_updated_this_run'] = False
+                        
                         edited = objEBSD.manage_data_editor (xydata, res)
                         if edited:
                             st.write ({
@@ -105,6 +107,7 @@ if __name__ == '__main__':
                                      key = 'conf_add_band')
 
                     elif tab_name in ['Bandsearch result', 'バンドサーチ結果']:
+                        #objEBSD.band_disply_num_select ()
                         objEBSD.display_ebsd_with_band ()
 
                         col1, col2 = st.columns (2)

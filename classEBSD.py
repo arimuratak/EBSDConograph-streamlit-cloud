@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 import numpy as np
 import random
 import pandas as pd
@@ -68,7 +69,10 @@ class EBSDClass:
             st.session_state['prev_col'] = ''
             save_logsList (logs, self.logPath)
             st.session_state['num_trial'] = str (random.randint (0, 1000))
-    
+            st.session_state['flgs_disp'] = [True for _ in range (len(df))]
+            st.session_state['flg_updated_this_run'] = False
+            st.session_state['edit_cnt'] = 0
+
     #-------------------------------------------------------
     # バンドサーチの結果（BandKukans）から、
     # 相関値,θ,ρ_center,ρ_begin,ρ_endのデータフレームを生成
@@ -204,7 +208,17 @@ class EBSDClass:
             df = st.session_state['lines_for_display']
         fig = plt.figure ()
         ax = fig.add_subplot (1,1,1)
-        for _, row in df.iterrows():
+
+        if sum (st.session_state['flgs_disp']) == 0:
+            ax.imshow (img)
+            step = 50
+            ax.set_xticks (np.arange (0, W + 1, step))
+            ax.set_yticks (np.arange (0, H + 1, step))
+            plt.tight_layout ()
+            return fig
+
+        for (_, row), flg_disp in zip (df.iterrows(), st.session_state['flgs_disp']):
+            if not flg_disp: continue
             if 'edge' in sels:
                 plt.plot (
                     [row['edge1_xy1'][0],row['edge1_xy2'][0]],
@@ -278,7 +292,8 @@ class EBSDClass:
         
         fig = plt.figure (figsize = (6,6))
         ax = fig.add_subplot (1,1,1)
-        for _, row in df.iterrows():
+        for (_, row), flg_disp in zip (df.iterrows(), st.session_state['flgs_disp']):
+            if not flg_disp: continue
             idx = row['idx']
             xy1 = row['2nd_xy1'].copy(); xy2 = row['2nd_xy2'].copy()
             plt.plot ([xy1[0], xy2[0]],[xy1[1],xy2[1]], c = 'y', linewidth = 3)
@@ -375,7 +390,7 @@ class EBSDClass:
     # df：編集前, newDf : 編集後
     #---------------------------------------------------------
     def to_str (self, df):
-        df['score'] = df['score'].apply (lambda x: '{:4f}'.format(x))
+        df['score'] = df['score'].apply (lambda x: '{:.4f}'.format(x))
         df['θ'] = df['θ'].apply (lambda x: '{:.4f}'.format(x))
         df['ρ_begin'] = df['ρ_begin'].apply (lambda x: '{:.4f}'.format(x))
         df['ρ_end'] = df['ρ_end'].apply (lambda x: '{:.4f}'.format(x))
@@ -396,23 +411,58 @@ class EBSDClass:
             flg &= all ([is_numeric (v) for v in df[col].tolist()])
         return flg
 
+    def _apply_editor_edits_to_flgs(self, editor_key: str):
+        # data_editor が保持している差分を読む
+        state = st.session_state.get(editor_key, {})
+        edited_rows = state.get("edited_rows", {}) 
+        # {row_idx: {"flg": False}, ...}
+
+        if not edited_rows:
+            return
+
+        flgs = list(st.session_state["flgs_disp"])  # list[bool]
+
+        for r, changes in edited_rows.items():
+            if "flg" in changes:
+                # r は 0-based の行番号（表示中の DataFrame の行順）
+                flgs[int(r)] = bool(changes["flg"])
+
+        st.session_state["flgs_disp"] = flgs
+
+
+
     def df_for_edit (self, mode = ''):
-        df = st.session_state['lines_for_display']
+        st.session_state['edit_cnt'] += 1
+        df = st.session_state['lines_for_display'].copy()
         df = df.loc[:, self.cols]
+        df['flg'] = st.session_state['flgs_disp']
+        df = df.loc[:, ['flg'] + self.cols]
         df = self.to_str (df)
         key = 'edit' + st.session_state['num_trial'] + mode
-        newDf = st.data_editor (df, hide_index = True,
-                            num_rows = 'dynamic',
-                            key = key,
-                            #disabled = self.cols
-                            disabled = ['idx', 'score'])
-
+        #key += '_' + str (st.session_state['edit_cnt'])
+        
+        newDf = st.data_editor (
+                df, hide_index = True,
+                num_rows = 'dynamic',
+                key = key,
+                #disabled = self.cols
+                disabled = ['idx', 'score'],
+                column_config = {
+                    'flg': st.column_config.CheckboxColumn (required = True)},
+                height = 35 * (len (df) + 1))
+            
         if not self.numerical_check (newDf):
             st.write ('Please input numerical value!!!')
             newDf = df
+        
+        st.session_state['flgs_disp'] = newDf['flg'].tolist()
 
         df = self.to_float (df)
         newDf = self.to_float (newDf)
+
+        df = df.drop ('flg', axis = 1)
+        newDf = newDf.drop ('flg', axis = 1)
+
         return df, newDf
 
     #---------------------------------------------------------
@@ -481,6 +531,23 @@ class EBSDClass:
             st.session_state['lines_for_display'] = self.get_lines_for_display ()
         return res
     
+    def clear_all_band_disp_flgs (self,):
+        lang = st.session_state['lang']
+        length = len (st.session_state['flgs_disp'])
+        if st.button (
+                {'eng' : 'Hide all', 'jpn' : '全非表示'}[lang],
+                key = 'flg_reset'):
+                st.session_state['flgs_disp'] = [False for _ in range (length)]
+        
+    def set_all_band_disp_flgs (self,):
+        lang = st.session_state['lang']
+        length = len (st.session_state['flgs_disp'])
+        if st.button (
+                {'eng' : 'Diplay all', 'jpn' : '全表示'}[lang],
+                key = 'flg_set'):
+                st.session_state['flgs_disp'] = [True for _ in range (length)]
+
+
     #----------------------------------------------------
     # データ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # 追加、行削除、数値変更 (θ, ρ_begin, ρ_end, ρ_center)
@@ -495,14 +562,18 @@ class EBSDClass:
                 added = True
 
         lang = st.session_state['lang']
-        col1, col2 = st.columns (2)
+        col1, col2, col3 = st.columns (3)
         with col1:
             doneIntsec = self.add_bands_intersection ()
+        with col2:
+            self.clear_all_band_disp_flgs ()
+        with col3:
+            self.set_all_band_disp_flgs ()
         
         old_df, new_df = self.df_for_edit (st.session_state['edit_mode'])
         # idx, col : 変更された行番号とカラム名
         # indices : 削除された行番, flg : 行が追加された(True)        
-        idx, col, indices, flg_expanded = self.judge_changed_df(old_df, new_df)
+        idx, col, indices, flg_expanded = self.judge_changed_df (old_df, new_df)
         
         if flg_expanded:
             with col2:
@@ -529,6 +600,9 @@ class EBSDClass:
                 save_logsList(logs, self.logPath)
             st.session_state['lines_for_display'] = self.get_lines_for_display()
             st.session_state['edit_mode'] = 'changed' + str (idx) + col + str (random.choice(list(range(1,1000))))
+
+        else:
+            st.session_state['edit_mode'] = 'not_changed'
         
         if (idx is not None) & (col is not None):
             with col2:
@@ -539,6 +613,17 @@ class EBSDClass:
               
         return (idx is not None) | (col is not None)
     
+    def band_disply_num_select (self,):
+        flgs = st.session_state['flgs_disp']
+        cols = st.columns (len (flgs))
+        ans = []
+        for n, (flg, col) in enumerate (zip (flgs, cols), 1):
+            with col:
+                v = st.checkbox (
+                str (n), flg, key = 'check_select_disp_{}'.format(n))
+            ans.append (v)
+        st.session_state['flgs_disp'] = ans
+
     def read_params (self,):
         params = read_params ()
         st.session_state['params'] = params

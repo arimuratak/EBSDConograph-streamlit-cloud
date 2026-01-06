@@ -7,6 +7,21 @@ import streamlit as st
 from classEBSD import EBSDClass
 from classConograph import Conograph
 
+def set_sidebar_width ():
+    st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] {
+            width: 800px !important;   /* 好きな幅に */
+        }
+        section[data-testid="stSidebar"] > div {
+            width: 800px !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+    )
+
 class MainClass:
     def __init__(self,):
         self.input = './input'
