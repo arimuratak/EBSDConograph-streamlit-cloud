@@ -76,8 +76,12 @@ def build_session_state ():
         st.session_state['BAND_WIDTH_MAX'] = None
     if 'PC' not in st.session_state:
         st.session_state['PC'] = None
+    if 'rhos' not in st.session_state:
+        st.session_state['rhos'] = None
     if 'thetas' not in st.session_state:
         st.session_state['thetas'] = None
+    if 'ArraySinogramErrors' not in st.session_state:
+        st.session_state['ArraySinogramErrors'] = None
     if 'flgs_disp' not in st.session_state:
         st.session_state['fgls_disp'] = None
     if 'edit_cnt' not in st.session_state:
@@ -122,3 +126,5 @@ def reset_session_state ():
         st.session_state['lines_for_display'] = pd.DataFrame ()
     if st.session_state['flg_updated_this_run'] is None:
         st.session_state['flg_updated_this_run'] = False
+    if st.session_state['BandKukans'] is None:
+        st.session_state['BandKukans'] = []

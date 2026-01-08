@@ -26,7 +26,7 @@ class EBSDClass:
         #self.path_line_visual = './result/out.shapes.json'
         self.H = None
         self.W = None
-        self.cols = ['idx', 'score', 'θ', 'ρ_center', 'ρ_begin', 'ρ_end']
+        self.cols = ['flg', 'idx', 'score', 'θ', 'ρ_center', 'ρ_begin', 'ρ_end']
         self.cols_tr = self.cols[2:]
         self.param_names = [
             'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
@@ -62,14 +62,14 @@ class EBSDClass:
             #st.session_state['uploaded'] = False
             st.session_state['doneEBSD'] = True
             st.session_state['doneCono'] = False
-            df = self.get_lines_for_display ()
-            st.session_state['lines_for_display'] = df
+            #df = self.get_lines_for_display ()
+            #st.session_state['lines_for_display'] = df
             st.session_state['just_after_bandsearch'] = True
             st.session_state['prev_idx'] = -100
             st.session_state['prev_col'] = ''
             save_logsList (logs, self.logPath)
             st.session_state['num_trial'] = str (random.randint (0, 1000))
-            st.session_state['flgs_disp'] = [True for _ in range (len(df))]
+            #st.session_state['flgs_disp'] = [True for _ in range (len(df))]
             st.session_state['flg_updated_this_run'] = False
             st.session_state['edit_cnt'] = 0
 
@@ -102,16 +102,18 @@ class EBSDClass:
     def get_lines_for_display (self,):
         bands = st.session_state['BandKukans']
         shape = st.session_state['shape']
-        df = {'idx' : [], 'score' : [],
+        df = {'flg' : [], 'idx' : [], 'score' : [],
               'edge1_xy1' : [], 'edge1_xy2' : [],
               'edge2_xy1' : [], 'edge2_xy2' : [],
               'center_xy1'  : [], 'center_xy2' : [],
               '2nd_xy1' : [], '2nd_xy2' : []}
         
+        flgs = []
         scores = []
         BandEdges_rhotheta  = []
         BandCenters_rhotheta = []
         for band in bands:
+            flgs.append (band.putFlgDisp())
             scores.append (band.putConvolution())
             BandEdges_rhotheta.append([band.edge_rhos[0], band.center_rt[1]])
             BandEdges_rhotheta.append([band.edge_rhos[1], band.center_rt[1]])
@@ -122,10 +124,11 @@ class EBSDClass:
         getLinesForDisplay(shape, BandEdges_rhotheta, edges)
         getLinesForDisplay(shape, BandCenters_rhotheta, centers)
 
-        for i, (score, edge1, edge2, center, b2nd1, b2nd2) in enumerate (
-                    zip (scores, edges[::2], edges[1::2], centers,
+        for i, (flg, score, edge1, edge2, center, b2nd1, b2nd2) in enumerate (
+                    zip (flgs, scores, edges[::2], edges[1::2], centers,
                         BandEdges_rhotheta[::2],
                         BandEdges_rhotheta[1::2]), 1):
+            df['flg'].append (flg)
             df['idx'].append (i)
             df['score'].append (score)
             df['edge1_xy1'].append ([edge1[0][0], edge1[1][0]])
@@ -202,14 +205,15 @@ class EBSDClass:
     #---------------------------------------------------------
     def draw_lines_ebsd (self, img, sels = ['edge', 'center']):
         H, W, _ = img.shape
-        if st.session_state['lines_for_display'] is None:
-            df = self.get_lines_for_display ()
-        else:
-            df = st.session_state['lines_for_display']
+        #if st.session_state['lines_for_display'] is None:
+        #    df = self.get_lines_for_display ()
+        #else:
+        #    df = st.session_state['lines_for_display']
+        df = self.get_lines_for_display ()
         fig = plt.figure ()
         ax = fig.add_subplot (1,1,1)
 
-        if sum (st.session_state['flgs_disp']) == 0:
+        if df['flg'].sum() == 0:
             ax.imshow (img)
             step = 50
             ax.set_xticks (np.arange (0, W + 1, step))
@@ -217,8 +221,8 @@ class EBSDClass:
             plt.tight_layout ()
             return fig
 
-        for (_, row), flg_disp in zip (df.iterrows(), st.session_state['flgs_disp']):
-            if not flg_disp: continue
+        for _, row in df.iterrows():
+            if not row['flg']: continue
             if 'edge' in sels:
                 plt.plot (
                     [row['edge1_xy1'][0],row['edge1_xy2'][0]],
@@ -285,15 +289,16 @@ class EBSDClass:
         img = cv2.imread ('result/out.2nd_derivative.png')
         img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
         H, W, _ = img.shape
-        if st.session_state['lines_for_display'] is None:
-            df = self.get_lines_for_display ()
-        else:
-            df = st.session_state['lines_for_display']
+        #if st.session_state['lines_for_display'] is None:
+        #    df = self.get_lines_for_display ()
+        #else:
+        #    df = st.session_state['lines_for_display']
+        df = self.get_lines_for_display ()
         
         fig = plt.figure (figsize = (6,6))
         ax = fig.add_subplot (1,1,1)
-        for (_, row), flg_disp in zip (df.iterrows(), st.session_state['flgs_disp']):
-            if not flg_disp: continue
+        for _, row in df.iterrows():
+            if not row['flg']: continue
             idx = row['idx']
             xy1 = row['2nd_xy1'].copy(); xy2 = row['2nd_xy2'].copy()
             plt.plot ([xy1[0], xy2[0]],[xy1[1],xy2[1]], c = 'y', linewidth = 3)
@@ -381,8 +386,8 @@ class EBSDClass:
         if flg:
             logs = addBandsFrom4Bands ()
             save_logsList (logs, self.logPath)
-            st.session_state['lines_for_display'] =\
-                        self.get_lines_for_display ()
+            #st.session_state['lines_for_display'] =\
+            #            self.get_lines_for_display ()
         return flg
 
     #---------------------------------------------------------
@@ -411,36 +416,13 @@ class EBSDClass:
             flg &= all ([is_numeric (v) for v in df[col].tolist()])
         return flg
 
-    def _apply_editor_edits_to_flgs(self, editor_key: str):
-        # data_editor が保持している差分を読む
-        state = st.session_state.get(editor_key, {})
-        edited_rows = state.get("edited_rows", {}) 
-        # {row_idx: {"flg": False}, ...}
-
-        if not edited_rows:
-            return
-
-        flgs = list(st.session_state["flgs_disp"])  # list[bool]
-
-        for r, changes in edited_rows.items():
-            if "flg" in changes:
-                # r は 0-based の行番号（表示中の DataFrame の行順）
-                flgs[int(r)] = bool(changes["flg"])
-
-        st.session_state["flgs_disp"] = flgs
-
-
-
     def df_for_edit (self, mode = ''):
-        st.session_state['edit_cnt'] += 1
-        df = st.session_state['lines_for_display'].copy()
+        df = self.get_lines_for_display ()
         df = df.loc[:, self.cols]
-        df['flg'] = st.session_state['flgs_disp']
-        df = df.loc[:, ['flg'] + self.cols]
         df = self.to_str (df)
         key = 'edit' + st.session_state['num_trial'] + mode
-        #key += '_' + str (st.session_state['edit_cnt'])
         
+        df = df.reset_index (drop = True)
         newDf = st.data_editor (
                 df, hide_index = True,
                 num_rows = 'dynamic',
@@ -455,7 +437,9 @@ class EBSDClass:
             st.write ('Please input numerical value!!!')
             newDf = df
         
-        st.session_state['flgs_disp'] = newDf['flg'].tolist()
+        for flg, b in zip (newDf['flg'].tolist(),
+                           st.session_state ['BandKukans']):
+            b.setFlgDisp (flg)
 
         df = self.to_float (df)
         newDf = self.to_float (newDf)
@@ -469,7 +453,7 @@ class EBSDClass:
     # バンドデータ表の表示（編集不可）
     #---------------------------------------------------------
     def df_for_monitor (self,):
-        df = st.session_state['lines_for_display']
+        df = self.get_lines_for_display ()
         df = df.loc[:, self.cols]
         df = self.to_str (df)
         
@@ -528,48 +512,43 @@ class EBSDClass:
         if xydata is not None:
             theta, rho = xydata
             res = addBand_theta_rho (theta, rho)
-            st.session_state['lines_for_display'] = self.get_lines_for_display ()
         return res
     
     def clear_all_band_disp_flgs (self,):
         lang = st.session_state['lang']
-        length = len (st.session_state['flgs_disp'])
         if st.button (
                 {'eng' : 'Hide all', 'jpn' : '全非表示'}[lang],
                 key = 'flg_reset'):
-                st.session_state['flgs_disp'] = [False for _ in range (length)]
+            for b in st.session_state['BandKukans']: b.setFlgDisp (False)
         
     def set_all_band_disp_flgs (self,):
         lang = st.session_state['lang']
-        length = len (st.session_state['flgs_disp'])
         if st.button (
                 {'eng' : 'Diplay all', 'jpn' : '全表示'}[lang],
-                key = 'flg_set'):
-                st.session_state['flgs_disp'] = [True for _ in range (length)]
-
+                key = 'flg_set'):           
+            for b in st.session_state['BandKukans']: b.setFlgDisp (True)
 
     #----------------------------------------------------
     # データ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # 追加、行削除、数値変更 (θ, ρ_begin, ρ_end, ρ_center)
     #----------------------------------------------------
     def manage_data_editor (self, xydata = None, res = None):
-        added = False
+        #added = False
         if (res is not None) and (
             st.session_state['unix_time'] != str (res['unix_time'])):
             is_found = self.addBandThetaRho (xydata)
             if is_found == 'Found':
                 st.session_state['unix_time'] = str (res['unix_time'])
-                added = True
+                #added = True
 
         lang = st.session_state['lang']
-        col1, col2, col3 = st.columns (3)
-        with col1:
-            doneIntsec = self.add_bands_intersection ()
-        with col2:
-            self.clear_all_band_disp_flgs ()
-        with col3:
-            self.set_all_band_disp_flgs ()
-        
+        #doneIntsec = self.add_bands_intersection ()
+        #col1, col2, _, _ = st.columns (4)
+        #with col1:
+        #    self.clear_all_band_disp_flgs ()
+        #with col2:
+        #    self.set_all_band_disp_flgs ()
+        col2 = st.empty ()
         old_df, new_df = self.df_for_edit (st.session_state['edit_mode'])
         # idx, col : 変更された行番号とカラム名
         # indices : 削除された行番, flg : 行が追加された(True)        
@@ -583,7 +562,6 @@ class EBSDClass:
         
         elif len (indices) > 0:
             removeBands (indices)
-            st.session_state['lines_for_display'] = self.get_lines_for_display()
             st.session_state['edit_mode'] = 'deleted'
             
         elif (idx is not None) & (col is not None):
@@ -598,13 +576,12 @@ class EBSDClass:
                 removeBands ([idx])
                 logs = addBand_theta_edges (theta, rhomin, rhomax)
                 save_logsList(logs, self.logPath)
-            st.session_state['lines_for_display'] = self.get_lines_for_display()
             st.session_state['edit_mode'] = 'changed' + str (idx) + col + str (random.choice(list(range(1,1000))))
 
         else:
             st.session_state['edit_mode'] = 'not_changed'
         
-        if (idx is not None) & (col is not None):
+        if ((idx is not None) & (col is not None)) | (len (indices) > 0):
             with col2:
                 st.button ({
                     'eng' : 'Click to fix data change',
@@ -613,17 +590,6 @@ class EBSDClass:
               
         return (idx is not None) | (col is not None)
     
-    def band_disply_num_select (self,):
-        flgs = st.session_state['flgs_disp']
-        cols = st.columns (len (flgs))
-        ans = []
-        for n, (flg, col) in enumerate (zip (flgs, cols), 1):
-            with col:
-                v = st.checkbox (
-                str (n), flg, key = 'check_select_disp_{}'.format(n))
-            ans.append (v)
-        st.session_state['flgs_disp'] = ans
-
     def read_params (self,):
         params = read_params ()
         st.session_state['params'] = params

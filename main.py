@@ -44,13 +44,13 @@ if __name__ == '__main__':
                         with space_bs_exec: objEBSD.run_band_search ()
 
                     elif (job_name in ['Band data', 'バンドデータ']) & st.session_state['doneEBSD']:
-                        st.write ({
-                                'eng' : '＜＜Band date editor＞＞',
-                                'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
+                        col1, col2, col3 = st.columns ([1,1,2])
+                        with col1: objEBSD.clear_all_band_disp_flgs()
+                        with col2: objEBSD.set_all_band_disp_flgs()
+                        with col3: objEBSD.add_bands_intersection()
+                        
                         xydata = st.session_state['xydata']
                         res = st.session_state['res_clicked']
-                        #st.session_state['flg_updated_this_run'] = False
-                        
                         edited = objEBSD.manage_data_editor (xydata, res)
                         if edited:
                             st.write ({

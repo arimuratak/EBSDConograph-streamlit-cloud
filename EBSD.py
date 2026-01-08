@@ -8,6 +8,7 @@ import os, os.path
 import importlib
 import bisect
 import pickle
+
 from skimage.io import imread, imsave
 from skimage.transform import radon, rescale
 from skimage import exposure
@@ -118,6 +119,8 @@ class BandData:
         self.dark_edge_rhos = [0.0, 0.0] # バンドエッジが同じrho座標にあるかどうかを判定するために幅を持たせておく。
         self.convolution = 0.0
         # self.num_band_pairs_good_match = []
+        self.flg_disp = True
+        self.idx = 0
     def putTheta(self):
         return self.center_rt[1]
     def putConvolution(self):
@@ -134,6 +137,14 @@ class BandData:
         [self.center_SC, self.BraggAngle] = transform_RhoTheta_to_SphericalCordinate(image_o, PC, self.putTheta(), self.edge_rhos[0], self.edge_rhos[1], center_rho)
         self.center_rt = transform_SphericalCordinate_to_RhoTheta(image_o, PC, self.center_SC)
         self.center_rt[1] = np.rad2deg(self.center_rt[1]) # band center　座標()のthetaをradianをdegreeに変換
+    def putFlgDisp (self,):
+        return self.flg_disp
+    def setFlgDisp (self, flg):
+        self.flg_disp = flg
+    def putIdx (self,):
+        return self.idx
+    def setIdx (self, idx):
+        self.idx = idx
 
 # バンドセンターrhoC (rhoC=Noneの場合, エッジ(rho1, theta), (rho2, theta)に関する情報)から、
 # バンドセンターにPCから下した垂線の足の球面座標よる表示SCとバンド幅に関する情報を得る。
@@ -408,6 +419,7 @@ def getNearestIndex(arr, val):
 
 def getNearestZeroPoint(itheta, rho):
     global ArrayDeriv2
+    ArrayDeriv2 = st.session_state['ArrayDeriv2']
     min, max = 0, len(ArrayDeriv2)
     min_found, max_found = False, False
     for i in range(len(ArrayDeriv2) - 1):
@@ -426,6 +438,8 @@ def getNearestZeroPoint(itheta, rho):
 
 def getNearZeroPoint(itheta, rho, PlusMinus):
     global rhos, ArrayDeriv2
+    rhos = st.session_state['rhos']
+    ArrayDeriv2 = st.session_state['ArrayDerive2']
     edge=[0.,0.]
     i = getNearestIndex(rhos, rho)
     if PlusMinus:
@@ -481,6 +495,8 @@ def printAll():
     global BandKukans
     global shape
     global ArraySinogramErrors
+    if shape is None:
+        shape = st.session_state['shape']
     #with open(name_pickle, 'wb') as f:
     #    pickle.dump(PC, f)
     #    pickle.dump(thetas, f)
@@ -493,6 +509,7 @@ def printAll():
     printSphericalCoordinates(BandKukans, 'result/data0.txt', flg = 0) # 抽出したバンドエッジ[rho_1, rho_2, theta]をテキスト出力
     printSphericalCoordinates(BandKukans, 'result/data1.txt', flg = 1)
 
+"""
 def readResultsIfExists():
     global PC
     global thetas # degree
@@ -519,7 +536,8 @@ def readResultsIfExists():
         shape = None
         ArraySinogramErrors = None
         ArrayDeriv2 = None
-readResultsIfExists()
+"""
+#readResultsIfExists()
 
 
 def printSphericalCoordinates(BandKukans, fname, flg = 0):
@@ -681,8 +699,10 @@ def run():
     
         print('Rescale image...', flush=True)
         logs.append ('Rescale image...')
+        print ('#1-------')
         image = imread(filename, as_gray=True) # 画像の読込み
         RescaleParam = params.RescaleParam / max(image.shape) # 画像のスケールを縮小するパラメータ
+        print ('#2-------')
         image = rescale(image, scale=RescaleParam, mode='reflect') # 画像のスケールを変更
         mask_circle = np.ones_like (image).astype (np.bool_)
         if Circle:
@@ -737,6 +757,7 @@ def run():
         #　線分の長さはスケール変換後の値。
         ArraySinogramErrors = []
         calRadonGosa(thetas, image, sinogram, sigma    , Circle, ArraySinogramErrors    )
+        st.session_state['ArraySinogramErrors'] = ArraySinogramErrors
         print('  done', flush=True)
         
         # 微分値の計算
@@ -798,6 +819,7 @@ def run():
         print(len(BandKukans), flush=True)
         logs[-1] += str (len (BandKukans))
         BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
+
         #print ('\ntime for band search {} sec'.format(time_ed_bs - time_st_bs))
         # iter = 0
         # while iter < 1 and params.GenerateBandsFromBands and len(BandKukans) < params.NumberOfBands:
@@ -846,11 +868,12 @@ def run():
 #| ex) removeBands([2,0,4])  # 0,2,4番目のバンドを消去する
 #|
 def removeBands(indices):
-    #global BandKukans
+    global BandKukans
     BandKukans = st.session_state['BandKukans']
     if BandKukans is None: return
     for i in sorted(indices, reverse=True):
         del BandKukans[i]
+        #del flgs[i]
     st.session_state['BandKukans'] = BandKukans
     printAll()
 
@@ -858,7 +881,7 @@ def removeBands(indices):
 #| BandKukans[i]のバンド中心rhoを変更する(バンドセンター以外の情報は変更なし)
 #|
 def editBandCenter(rho, i):
-    #global PC, BandKukans, shape, ArrayDeriv2
+    global PC, BandKukans, shape, ArrayDeriv2
     PC = st.session_state['PC']
     BandKukans = st.session_state['BandKukans']
     shape = st.session_state['shape']
@@ -999,7 +1022,7 @@ def getBand_theta_rhos(theta, rho1, rho2):
 #| バンド（角度θ、中心ρ）をBandKukansに追加する。
 #|
 def addBand_theta_rho(theta, rho):
-    #global BandKukans
+    global BandKukans
     BandKukans = st.session_state['BandKukans']
     BAND_WIDTH_MIN = st.session_state['BAND_WIDTH_MIN']
     BAND_WIDTH_MAX = st.session_state['BAND_WIDTH_MAX']
@@ -1012,6 +1035,7 @@ def addBand_theta_rho(theta, rho):
     if band is None:
         print('Failed: no band found', file=sys.stderr, flush=True)
         return 'Failed: no band found'
+    
     BandKukans.append(band)
     BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
     st.session_state['BandKukans'] = BandKukans
@@ -1023,7 +1047,7 @@ def addBand_theta_rho(theta, rho):
 #| バンド（角度targetTheta(degree)、境界[rhomin,rhomax]）をBandKukansに追加する。
 #|
 def addBand_theta_edges(targetTheta, rhomin, rhomax):
-    #global BandKukans
+    global BandKukans
     BandKukans = st.session_state['BandKukans']
     # バンドを取得
     band = getBand_theta_rhos(targetTheta, rhomin, rhomax)
@@ -1036,6 +1060,7 @@ def addBand_theta_edges(targetTheta, rhomin, rhomax):
         print('Failed: band already exists', file=sys.stderr, flush=True)
         logs = ['Failed: band already exists']
         return logs
+    
     # バンドを追加する
     BandKukans.append(band)
     BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
@@ -1049,6 +1074,8 @@ def addBand_theta_edges(targetTheta, rhomin, rhomax):
 #|
 def getCrossing(band1, band2):
     global Circle, shape
+    Circle = st.session_state['Circle']
+    shape = st.session_state['shape']
     import params
     #params = set_params()
     rho1, theta1 = band1.center_rt
