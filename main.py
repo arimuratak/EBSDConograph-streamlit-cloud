@@ -41,8 +41,9 @@ if __name__ == '__main__':
                     elif (job_name in ['Bandsearch','バンドサーチ']) & st.session_state['uploaded']:
                         space_bs_exec = st.empty ()
                         objEBSD.params_menu ()
-                        with space_bs_exec: objEBSD.run_band_search ()
-
+                        with space_bs_exec:
+                            objEBSD.run_band_search ()
+                        
                     elif (job_name in ['Band data', 'バンドデータ']) & st.session_state['doneEBSD']:
                         col1, col2, col3 = st.columns ([1,1,2])
                         with col1: objEBSD.clear_all_band_disp_flgs()
@@ -58,8 +59,9 @@ if __name__ == '__main__':
                                     'jpn' : '＜＜編集後の確認用＞＞'}[lang])
                             objEBSD.df_for_monitor ()
 
-                    # COnograph
-                    elif (job_name == 'Conograph') & st.session_state['doneEBSD']:
+                    # Conograph
+                    elif (job_name == 'Conograph') & (
+                        st.session_state['doneEBSD'] | st.session_state['bdata_uploaded']):
                         space_cono_exec = st.empty ()
                         objCono.params_menu ()
                         with space_cono_exec:

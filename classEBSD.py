@@ -10,10 +10,11 @@ from matplotlib.figure import Figure
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
 from dataIO import fig2img, cvtPos, update_params, \
-    read_params, is_numeric, save_logsList
+    read_params, is_numeric, save_logsList, bdata_check
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
-        addBand_theta_edges, addBand_theta_rho
+        addBand_theta_edges, addBand_theta_rho,\
+            getBand_theta_rhos, findBand
 random.seed (2025)
 
 class EBSDClass:
@@ -23,6 +24,7 @@ class EBSDClass:
         self.paramsPath = './params.py'
         self.path_sample = './sample'
         self.path_result = './result'
+        self.dataPath_uploaded = './input/data_uploaded.txt'
         #self.path_line_visual = './result/out.shapes.json'
         self.H = None
         self.W = None
@@ -665,3 +667,26 @@ class EBSDClass:
                 text = f.read ()
             st.text_area ('log', text, height = 400,
                     label_visibility = 'hidden')
+            
+    def bands2BandKukans (self, df = None):
+        if df is None:
+            _, df = bdata_check (self.dataPath_uploaded)
+
+        BandKukans = []
+        for _, row in df.iterrows ():
+
+            theta = float (row['Phi(deg)'])
+            rhomin = float (row['Sigma_begin(deg)'])
+            rhomax = float (row['Sigma_end(deg)'])
+            band = getBand_theta_rhos (theta, rhomin, rhomax)
+            band.convolution = 0.0
+            if band is None: continue
+            if findBand (band, BandKukans) is not None:
+                continue
+
+            BandKukans.append (band)
+            
+        st.session_state['BandKukans'] = BandKukans
+
+
+

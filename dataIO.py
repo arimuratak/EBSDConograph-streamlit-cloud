@@ -277,18 +277,52 @@ def save_logsList (logs, path):
     with open (path, 'w', encoding = 'utf-8') as f:
         f.write ('\n'.join (logs))
 
-if __name__ == '__main__':
-    """names = [
-            'use_band_width', 'searchLevel', 'range_deg',
-            'tolerance_unit_cell',
-            'tolerance_vector_length_gain',
-            'tolerance_vector_length', 'num_miller_idx',
-            'th_hkl', 'ref_shift_dXdYdZ', 'th_fm',
-            'axisRhombohedralSym', 'axisMonoclinicSym',
-            'latexStyle']
-    ans = read_input_txt (names = names[1:])
-    print (ans)"""
+def bdata_check (path = 'result/data_uploaded.txt'):
+    with open (path, 'r', encoding = 'utf-8') as f:
+        lines = list (f.readlines ())
+        
+    use_band_width = None
+    waveLen = None
+    flg = True
+    df = None
+    cols = ['Phi(deg)', 'Sigma(deg)', 'Sigma_begin(deg)',
+            'Sigma_end(deg)']
+    while len (lines):
+        line = lines.pop(0)
+        if all ([t in line for t in ['Use the band widths?',
+                                    'WaveLength(Angstrom)']]) :
+            line = lines.pop(0).split()
+            use_band_width = line[0]
+            waveLen = line[1]
+            flg &= use_band_width in ['0', '1']
+            flg &= is_numeric (waveLen)
+        elif all ([col in line for col in cols]):
+            df = []
+        elif df is not None:
+            line = line.split()
+            if len (line) == 0: continue
+            flg &= all ([is_numeric (v) for v in line])
+            flg &= len (line) == len (cols)
+            df.append (line)
 
-    ans, idx = read_out_file ('result/out.txt')
-    print (ans)
-    print (idx)
+    df = pd.DataFrame (df, columns = cols)
+    return flg, df
+
+def update_use_band_width (use_band_width = 1,
+                    readPath = 'input/bdata_uploaded.txt',
+                    savePath = 'result/data1.txt'):
+    with open (readPath, 'r', encoding = 'utf-8') as f:
+        lines = list (f.readlines ())
+
+    line = lines[1].split()
+    line[0] = str (use_band_width)
+    line = '\t'.join (line) + '\n'
+    lines[1] = line
+    lines = ''.join (lines)
+
+    with open (savePath, 'w', encoding = 'utf-8') as f:
+        f.write (lines)
+    
+if __name__ == '__main__':
+    flg, df = bdata_check ('input/data_uploaded.txt')
+    print (flg)

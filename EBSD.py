@@ -439,7 +439,7 @@ def getNearestZeroPoint(itheta, rho):
 def getNearZeroPoint(itheta, rho, PlusMinus):
     global rhos, ArrayDeriv2
     rhos = st.session_state['rhos']
-    ArrayDeriv2 = st.session_state['ArrayDerive2']
+    ArrayDeriv2 = st.session_state['ArrayDeriv2']
     edge=[0.,0.]
     i = getNearestIndex(rhos, rho)
     if PlusMinus:
@@ -1063,7 +1063,8 @@ def addBand_theta_edges(targetTheta, rhomin, rhomax):
     
     # バンドを追加する
     BandKukans.append(band)
-    BandKukans.sort(key=lambda b: b.putConvolution(), reverse=True)
+    BandKukans.sort(key=lambda b: b.putConvolution(),
+                    reverse=True)
     st.session_state['BandKukans'] = BandKukans
     print(f'ADDED: (θ, ρ_cener, ρ_begin, ρ_end) = ({band.center_rt[1]:.4f} {band.center_rt[0]:.4f} {band.edge_rhos[0]:.4f} {band.edge_rhos[1]:.4f})', flush=True)
     printAll()

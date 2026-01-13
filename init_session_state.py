@@ -88,6 +88,10 @@ def build_session_state ():
         st.session_state['edit_cnt'] = None
     if 'flg_updated_this_run' not in st.session_state:
         st.session_state['flg_updated_this_run'] = None
+    if 'bdata_uploaded' not in st.session_state:
+        st.session_state['bdata_uploaded'] = None
+    if 'uploaded_params' not in st.session_state:
+        st.session_state['uploaded_params'] = None
 
 def reset_session_state ():
     if st.session_state['uploaded'] is None:
@@ -128,3 +132,7 @@ def reset_session_state ():
         st.session_state['flg_updated_this_run'] = False
     if st.session_state['BandKukans'] is None:
         st.session_state['BandKukans'] = []
+    if st.session_state['bdata_uploaded'] is None:
+        st.session_state['bdata_uploaded'] = False
+    if st.session_state['uploaded_params'] is None:
+        st.session_state['uploaded_params'] = False

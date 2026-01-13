@@ -2,25 +2,8 @@ import os
 import time
 import shutil
 import streamlit as st
-from dataIO import zip_folder
-import streamlit as st
-from classEBSD import EBSDClass
-from classConograph import Conograph
-
-def set_sidebar_width ():
-    st.markdown(
-    """
-    <style>
-        section[data-testid="stSidebar"] {
-            width: 800px !important;   /* 好きな幅に */
-        }
-        section[data-testid="stSidebar"] > div {
-            width: 800px !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-    )
+from dataIO import zip_folder,\
+    bdata_check, update_use_band_width
 
 class MainClass:
     def __init__(self,):
@@ -30,11 +13,11 @@ class MainClass:
         self.path_sample = './sample'
         self.path_result = './result'
         self.path_line_visual = './result/out.shapes.json'
+        self.dataPath0 = 'result/data0.txt'
+        self.dataPath1 = 'result/data1.txt'
+        self.dataPath_uploaded = 'input/data_uploaded.txt'
         self.H = None
         self.W = None
-
-        #self.objEBSD = EBSDClass ()
-        #self.objCono = Conograph ()
 
         self.gen_disp = [
             {   'eng' : ['EBSD orignal image'],
@@ -46,7 +29,9 @@ class MainClass:
                         'EBSD orignal image'],
                 'jpn' : [
                         'Conograph', 'バンドサーチ',
-                        'EBSD元画像']}]
+                        'EBSD元画像']},
+            {   'eng' : ['Conograph'], 'jpn' : ['COnograph']}
+            ]
 
         self.menus_disp = {
             'Bandsearch' : {
@@ -115,15 +100,15 @@ class MainClass:
         lang = st.session_state['lang']
 
         img_file = st.file_uploader (
-            {'eng' : 'Upload EBSD image file',
-             'jpn' : 'EBSD画像ファイル アップロード'}[lang],
+            {'eng' : 'EBSD image file',
+             'jpn' : 'EBSD画像ファイル'}[lang],
             type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
         
         if img_file is None: key = 'param'
         else: key = 'param_' + img_file.name
         param_file = st.file_uploader (
-                {'eng' : 'Upload parameter file (py)',
-                'jpn' : 'パラメータファイル アップロード (py)'}[lang],
+                {'eng' : 'Parameter file (py)',
+                'jpn' : 'パラメータファイル (py)'}[lang],
                 type = ['py'], key = key)
         
         flg_new_file = False
@@ -161,16 +146,57 @@ class MainClass:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
             st.session_state['doneCono'] = False
+            st.session_state['bdata_uploaded'] = False
+
+        if flg_new_param:
+            self.upload_banddata_file ()
     
+    def upload_banddata_file (self,):
+        lang = st.session_state['lang']
+
+        bdata_file = st.file_uploader (
+            {'eng' : 'Band data',
+             'jpn' : 'バンドデータ'}[lang],
+             type = ['txt'], key = 'band_data')
+        
+        if bdata_file is not None:
+            savePath = self.dataPath_uploaded
+            if os.path.exists (savePath): os.remove (savePath)
+            with open (savePath, 'wb') as f:
+                f.write (bdata_file.getbuffer ())
+
+            flg, _ = bdata_check (savePath)
+            if flg:
+                update_use_band_width (
+                    use_band_width = 0,
+                    readPath = savePath,
+                    savePath = self.dataPath0)
+                update_use_band_width (
+                    use_band_width = 1,
+                    readPath = savePath,
+                    savePath = self.dataPath1)
+                st.session_state['bdata_uploaded'] = True
+
+            else:
+                st.session_state['bdata_uploaded'] = False
+                st.write (
+                    {'eng' : 'Please upload correct data!!',
+                    'jpn' : '正しいデータをアップロードして下さい!!'}[lang])
+
     def general_disp_menus (self,):
         lang = st.session_state['lang']
         menus = []
-        if st.session_state['doneCono']:
+
+        if st.session_state['bdata_uploaded'
+                    ] & st.session_state['doneCono']:
+            menus = self.gen_disp[3][lang]
+        elif st.session_state['doneCono']:
             menus = self.gen_disp[2][lang]
         elif st.session_state['doneEBSD']:
             menus = self.gen_disp[1][lang]
         elif st.session_state['uploaded']:
             menus = self.gen_disp[0][lang]
+        
         return menus
 
     # ----------------------------------------------------
@@ -211,79 +237,6 @@ class MainClass:
         menu2 = 'Conograph'
         menuList = [menu0, menu1, menu_edit, menu2]
         return menuList
-    """
-    def side_job_bandsearch (self,):
-        space = st.empty ()
-        self.objEBSD.params_menu()
-        with space:
-            self.objEBSD.run_band_search()
 
-    def side_job_banddata (self,):
-        lang = st.session_state['lang']
-        st.write ({
-            'eng' : '＜＜Band date editor＞＞',
-            'jpn' : '＜＜バンドデータ編集＞＞'}[lang])
-        xydata = st.session_state['xydata']
-        res = st.session_state['res_clicked']
-        edited = self.objEBSD.manage_data_editor (xydata, res)
-        if edited:
-            st.write ({
-                'eng' : '＜＜For confirmation after edit＞＞',
-                'jpn' : '＜＜編集後の確認用＞＞'}[lang])
-            self.objEBSD.df_for_monitor ()
 
-    def side_job_conograph (self,):
-        space_cono_exec = st.empty ()
-        self.objCono.params_menu ()
-        with space_cono_exec:
-            result = self.objCono.conograph_exec ()
-        _ = self.objCono.get_result (result)
 
-    def main_job_bandsearch (self,):
-        lang = st.session_state['lang']
-        menus = self.menus_disp['Bandsearch'][lang]
-        tabs = st.tabs (menus)
-        for tab, tab_name in zip (tabs, menus):
-            with tab:
-                if tab_name in [
-                        'Bandsearch result (EBSD img)',
-                        'バンドサーチ結果 (EBSD画像)']:
-                    self.objEBSD.display_ebsd_with_band ()
-
-                elif tab_name in [
-                        'Bandsearch result (2nd Derivate img)',
-                        'バンドサーチ結果 (2次微分画像)']:
-                    col1, col2 = st.columns (2)
-                    with col1:  
-                            st.write ({'eng' : '＜＜2nd Derivative＞＞',
-                                    'jpn' : '＜＜2次微分画像＞＞'}[lang])
-                    xydata, is_clicked, res = self.objEBSD.display_clicked_point ()
-                    st.session_state['xydata'] = xydata
-                    st.session_state['res_clicked'] = res
-                    if is_clicked & (xydata is None):
-                        with col2:
-                            st.write ('クリックは範囲外です')
-                    elif is_clicked & (xydata is not None) & (res is not None) and (
-                        st.session_state['unix_time'] != str (res['unix_time'])):
-                        with col2:
-                            _ = st.button ({
-                                'eng' : 'Click to fix band adding',
-                                'jpn' : 'バンド追加確定のためクリック'}[lang],
-                                key = 'conf_add_band')
-                                               
-                elif tab_name == 'EBSD log':
-                    self.objEBSD.display_log ()
-
-    def main_job_conograph (self,):
-        lang = st.session_state['lang']
-        menus = self.menus_disp['Conograph'][lang]
-        tabs = st.tabs (menus)
-        for tab, tab_name in zip (tabs, menus):
-            with tab:
-                if tab_name in ['Conograph result', 'Conograph結果']:
-                    self.objCono.display_result ()
-
-                elif tab_name == 'Conograph log':
-                    self.objCono.request_log ()
-                    self.objCono.display_log ()
-    """
