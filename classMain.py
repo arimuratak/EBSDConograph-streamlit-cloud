@@ -32,28 +32,18 @@ class MainClass:
                         'EBSD元画像']},
             {   'eng' : ['Conograph'], 'jpn' : ['COnograph']}
             ]
+        
+        self.disp_ebsd = {'eng' : 'EBSD orignal image', 'jpn' : 'EBSD元画像'}
+        self.disp_band = {'eng' : 'Bandsearch', 'jpn' : 'バンドサーチ'}
+        self.disp_cono = {'eng' : 'Conograph', 'jpn' : 'Conograph'}
 
         self.menus_disp = {
             'Bandsearch' : {
-                'eng' : [
-                    #'Bandsearch result (EBSD img)',
-                    #'Bandsearch result (2nd Derivate img)',
-                    'Bandsearch result',
-                    #'Band data table',
-                    'EBSD log'],
-                'jpn' : [
-                    #'バンドサーチ結果 (EBSD画像)',
-                    #'バンドサーチ結果 (2次微分画像)',
-                    'バンドサーチ結果',
-                    #'バンドデータ表',
-                    'EBSD log']},
+                'eng' : ['Bandsearch result', 'EBSD log'],
+                'jpn' : ['バンドサーチ結果', 'EBSD log']},
             'Conograph' : {
-                'eng' : [
-                    'Conograph result',
-                    'Conograph log'],
-                'jpn' : [
-                    'Conograph結果',
-                    'Conograph log']}    
+                'eng' : ['Conograph result', 'Conograph log'],
+                'jpn' : ['Conograph結果', 'Conograph log']}    
             }
         
         os.makedirs (self.input, exist_ok = True)
@@ -139,7 +129,7 @@ class MainClass:
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
             uploaded = True
-            st.session_state['param_name'] = param_file.name
+            #st.session_state['param_name'] = param_file.name
             st.session_state['file_name'] = img_file.name
 
         if uploaded:
@@ -176,6 +166,8 @@ class MainClass:
                     readPath = savePath,
                     savePath = self.dataPath1)
                 st.session_state['bdata_uploaded'] = True
+                #st.session_state['doneEBSD'] = False
+                st.session_state['doneCono'] = False
 
             else:
                 st.session_state['bdata_uploaded'] = False
@@ -187,10 +179,7 @@ class MainClass:
         lang = st.session_state['lang']
         menus = []
 
-        if st.session_state['bdata_uploaded'
-                    ] & st.session_state['doneCono']:
-            menus = self.gen_disp[3][lang]
-        elif st.session_state['doneCono']:
+        if st.session_state['doneCono']:
             menus = self.gen_disp[2][lang]
         elif st.session_state['doneEBSD']:
             menus = self.gen_disp[1][lang]
@@ -237,6 +226,3 @@ class MainClass:
         menu2 = 'Conograph'
         menuList = [menu0, menu1, menu_edit, menu2]
         return menuList
-
-
-

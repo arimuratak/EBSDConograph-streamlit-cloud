@@ -38,13 +38,15 @@ if __name__ == '__main__':
                         _ = objMain.upload_files ()
 
                     # バンドサーチ
-                    elif (job_name in ['Bandsearch','バンドサーチ']) & st.session_state['uploaded']:
+                    elif (job_name in ['Bandsearch','バンドサーチ']
+                          ) & st.session_state['uploaded']:
                         space_bs_exec = st.empty ()
                         objEBSD.params_menu ()
                         with space_bs_exec:
                             objEBSD.run_band_search ()
                         
-                    elif (job_name in ['Band data', 'バンドデータ']) & st.session_state['doneEBSD']:
+                    elif (job_name in ['Band data', 'バンドデータ']
+                          ) & st.session_state['doneEBSD']:
                         col1, col2, col3 = st.columns ([1,1,2])
                         with col1: objEBSD.clear_all_band_disp_flgs()
                         with col2: objEBSD.set_all_band_disp_flgs()
@@ -83,33 +85,8 @@ if __name__ == '__main__':
             tabs = st.tabs (menus)
             for tab, tab_name in zip (tabs, menus):
                 with tab:
-                    if tab_name in [
-                                    'Bandsearch result (EBSD img)',
-                                    'バンドサーチ結果 (EBSD画像)']:
-                        objEBSD.display_ebsd_with_band ()
-                    elif tab_name in [
-                                'Bandsearch result (2nd Derivate img)',
-                                'バンドサーチ結果 (2次微分画像)']:
-                        col1, col2 = st.columns (2)
-                        with col1:  
-                            st.write ({'eng' : '＜＜2nd Derivative＞＞',
-                                    'jpn' : '＜＜2次微分画像＞＞'}[lang])
-                        xydata, is_clicked, res = objEBSD.display_clicked_point ()
-                        st.session_state['xydata'] = xydata
-                        st.session_state['res_clicked'] = res
-                        if is_clicked & (xydata is None):
-                            with col2:
-                                st.write ('クリックは範囲外です')
-                        elif is_clicked & (xydata is not None) & (res is not None) and (
-                            st.session_state['unix_time'] != str (res['unix_time'])):
-                            with col2:
-                                _ = st.button (
-                                    {'eng' : 'Click to fix band adding',
-                                     'jpn' : 'バンド追加確定のためクリック'}[lang],
-                                     key = 'conf_add_band')
-
-                    elif tab_name in ['Bandsearch result', 'バンドサーチ結果']:
-                        #objEBSD.band_disply_num_select ()
+                    if tab_name in ['Bandsearch result', 'バンドサーチ結果']:
+                        objEBSD.download_data_file ()
                         objEBSD.display_ebsd_with_band ()
 
                         col1, col2 = st.columns (2)

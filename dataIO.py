@@ -8,12 +8,22 @@ import pandas as pd
 
 def zip_folder(folder_path):
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(
+        zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(folder_path):
             for file in files:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, start=folder_path)
                 zipf.write(file_path, arcname)
+    zip_buffer.seek(0)
+    return zip_buffer
+
+def zip_files (files : list):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(
+        zip_buffer, 'w', zipfile.ZIP_DEFLATED) as z:
+        for f in files:
+            z.write(f)
     zip_buffer.seek(0)
     return zip_buffer
 

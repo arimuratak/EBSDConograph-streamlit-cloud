@@ -10,11 +10,10 @@ from matplotlib.figure import Figure
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
 from dataIO import fig2img, cvtPos, update_params, \
-    read_params, is_numeric, save_logsList, bdata_check
+    read_params, is_numeric, save_logsList, zip_files
 from EBSD import run, getLinesForDisplay,\
     addBandsFrom4Bands, removeBands, editBandCenter,\
-        addBand_theta_edges, addBand_theta_rho,\
-            getBand_theta_rhos, findBand
+        addBand_theta_edges, addBand_theta_rho
 random.seed (2025)
 
 class EBSDClass:
@@ -35,7 +34,8 @@ class EBSDClass:
             'thred', 'MinCorrelation',
             'BAND_WIDTH_MIN', 'BAND_WIDTH_MAX', 'dtheta']
         self.logPath = 'result/LOG_EBSD.txt'
-        
+        self.data_files = ['result/data0.txt', 'result/data1.txt']
+
         os.makedirs (self.input, exist_ok = True)
         os.makedirs (self.path_result, exist_ok = True)
 
@@ -61,19 +61,11 @@ class EBSDClass:
         
         if exec:
             logs = run ()
-            #st.session_state['uploaded'] = False
             st.session_state['doneEBSD'] = True
             st.session_state['doneCono'] = False
-            #df = self.get_lines_for_display ()
-            #st.session_state['lines_for_display'] = df
-            st.session_state['just_after_bandsearch'] = True
-            st.session_state['prev_idx'] = -100
-            st.session_state['prev_col'] = ''
+            #st.session_state['bdata_uploaded'] = False
             save_logsList (logs, self.logPath)
             st.session_state['num_trial'] = str (random.randint (0, 1000))
-            #st.session_state['flgs_disp'] = [True for _ in range (len(df))]
-            st.session_state['flg_updated_this_run'] = False
-            st.session_state['edit_cnt'] = 0
 
     #-------------------------------------------------------
     # バンドサーチの結果（BandKukans）から、
@@ -207,10 +199,7 @@ class EBSDClass:
     #---------------------------------------------------------
     def draw_lines_ebsd (self, img, sels = ['edge', 'center']):
         H, W, _ = img.shape
-        #if st.session_state['lines_for_display'] is None:
-        #    df = self.get_lines_for_display ()
-        #else:
-        #    df = st.session_state['lines_for_display']
+
         df = self.get_lines_for_display ()
         fig = plt.figure ()
         ax = fig.add_subplot (1,1,1)
@@ -257,10 +246,12 @@ class EBSDClass:
         lang = st.session_state['lang']
         col1, col2 = st.columns (2)
         with col1:
-            st.write ({'eng' : '＜＜EBSD image (w/bands)＞＞',
-                        'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
+            st.write ({
+                'eng' : '＜＜EBSD image (w/bands)＞＞',
+                'jpn' : '＜＜EBSD画像(バンド付き)＞＞'}[lang])
         with col2:   
             sels = self.ebsd_line_display_menu ()
+
         path = 'result/out.rescaled.png'
         img = cv2.imread (path)
         img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
@@ -291,10 +282,7 @@ class EBSDClass:
         img = cv2.imread ('result/out.2nd_derivative.png')
         img = cv2.cvtColor (img, cv2.COLOR_BGR2RGB)
         H, W, _ = img.shape
-        #if st.session_state['lines_for_display'] is None:
-        #    df = self.get_lines_for_display ()
-        #else:
-        #    df = st.session_state['lines_for_display']
+
         df = self.get_lines_for_display ()
         
         fig = plt.figure (figsize = (6,6))
@@ -336,7 +324,7 @@ class EBSDClass:
             #st.pyplot (fig)
             img, ax_px = fig2img (fig, ax)
             res = streamlit_image_coordinates (img, key = key)
-            st.session_state['last_coords'] = res
+            #st.session_state['last_coords'] = res
         
         return res, ax_px, img, ax
 
@@ -388,8 +376,7 @@ class EBSDClass:
         if flg:
             logs = addBandsFrom4Bands ()
             save_logsList (logs, self.logPath)
-            #st.session_state['lines_for_display'] =\
-            #            self.get_lines_for_display ()
+
         return flg
 
     #---------------------------------------------------------
@@ -592,6 +579,18 @@ class EBSDClass:
               
         return (idx is not None) | (col is not None)
     
+    def download_data_file (self,):
+        lang = st.session_state['lang']
+        if all ([os.path.exists (file) for file in self.data_files]):
+            zip_buffer = zip_files (self.data_files)
+            st.download_button (
+                label = {
+                    'eng' : 'Download bandsearch result data (data0.txt, data1.txt)',
+                    'jpn' : 'バンドサーチ結果データファイルダウンロード (data0.txt, data1.txt)'}[lang],
+                    data = zip_buffer,
+                    file_name = 'data01.zip',
+                    key = 'bandsearch_result_download')
+
     def read_params (self,):
         params = read_params ()
         st.session_state['params'] = params
@@ -667,26 +666,3 @@ class EBSDClass:
                 text = f.read ()
             st.text_area ('log', text, height = 400,
                     label_visibility = 'hidden')
-            
-    def bands2BandKukans (self, df = None):
-        if df is None:
-            _, df = bdata_check (self.dataPath_uploaded)
-
-        BandKukans = []
-        for _, row in df.iterrows ():
-
-            theta = float (row['Phi(deg)'])
-            rhomin = float (row['Sigma_begin(deg)'])
-            rhomax = float (row['Sigma_end(deg)'])
-            band = getBand_theta_rhos (theta, rhomin, rhomax)
-            band.convolution = 0.0
-            if band is None: continue
-            if findBand (band, BandKukans) is not None:
-                continue
-
-            BandKukans.append (band)
-            
-        st.session_state['BandKukans'] = BandKukans
-
-
-
