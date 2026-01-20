@@ -699,10 +699,8 @@ def run():
     
         print('Rescale image...', flush=True)
         logs.append ('Rescale image...')
-        print ('#1-------')
         image = imread(filename, as_gray=True) # 画像の読込み
         RescaleParam = params.RescaleParam / max(image.shape) # 画像のスケールを縮小するパラメータ
-        print ('#2-------')
         image = rescale(image, scale=RescaleParam, mode='reflect') # 画像のスケールを変更
         mask_circle = np.ones_like (image).astype (np.bool_)
         if Circle:

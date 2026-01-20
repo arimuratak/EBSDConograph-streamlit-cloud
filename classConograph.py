@@ -44,11 +44,13 @@ class Conograph:
             'projection_center_shifts' : ['Δx', 'Δy', 'Δz', 'Err_Δx', 'Err_Δy', 'Err_Δz'],
             'indexing_before_refinement' : [
                 ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?'],
-                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?', 'band_width_cal', 'band_width_obs']
+                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?',
+                'band_width_cal', 'band_width_obs']
                 ],
             'indexing_after_refinement' : [
                 ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?'],
-                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?', 'band_width_cal', 'band_width_obs']
+                ['Band No.', 'h', 'k', 'l', 'X_cal', 'Y_cal', 'X_obs', 'Y_obs', 'distance', 'good_fit?',
+                'band_width_cal', 'band_width_obs']
                 ]
             }
 
@@ -106,10 +108,11 @@ class Conograph:
 
     def conograph_exec (self,):
         uploaded_map = self.load_files ()
+        mode = int (st.session_state['band_mode'])
         lang = st.session_state['lang']
         if st.button ({'eng' : 'Conograph Run',
                        'jpn':'Conograph実行'}[lang],
-                       key = 'exec_conograph'):
+                       key = '_'.join (['exec_conograph', str (mode)])):
             files = {}
             for fname, fobj in uploaded_map.items():
                 files[fname] = (fname, fobj,
@@ -130,6 +133,7 @@ class Conograph:
                 with open (self.outPath, 'wb') as f:
                     f.write (res.content)
                 ans = True
+                
                 st.session_state['doneCono'] = True
 
             elif res.status_code == 500:
@@ -251,7 +255,7 @@ class Conograph:
                         st.write (resultKey)
 
     def set_data_0or1 (self, use_band_width):
-        nums = ['0 : use band center', '1 : use band edges']
+        nums = ['0 : use band centers', '1 : use band edges']
         v = st.selectbox (
             'Select use band center or edges',
             nums, index = int (use_band_width),

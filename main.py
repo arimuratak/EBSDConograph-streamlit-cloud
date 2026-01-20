@@ -25,12 +25,14 @@ if __name__ == '__main__':
         with col1: objMain.select_langage()
         lang = st.session_state['lang']
         with col2: objMain.down_load_sample()
+        objMain.general_mode_select ()
             
         #--------------------------------------------------------
         #  サイドバーのjobメニュータブ
         #--------------------------------------------------------
         side_jobs = objMain.menu_side_jobs ()
         if len (side_jobs) > 0:
+            print (st.session_state['band_mode'], st.session_state['uploaded'])
             tabs = st.tabs (side_jobs)
             for tab, job_name in zip (tabs, side_jobs):
                 with tab:
@@ -38,14 +40,16 @@ if __name__ == '__main__':
                         _ = objMain.upload_files ()
 
                     # バンドサーチ
-                    elif (job_name in ['Bandsearch','バンドサーチ']
+                    elif (not st.session_state['band_mode']
+                          ) & (job_name in ['Bandsearch','バンドサーチ']
                           ) & st.session_state['uploaded']:
                         space_bs_exec = st.empty ()
                         objEBSD.params_menu ()
                         with space_bs_exec:
                             objEBSD.run_band_search ()
                         
-                    elif (job_name in ['Band data', 'バンドデータ']
+                    elif (not st.session_state['band_mode']
+                          ) & (job_name in ['Band data', 'バンドデータ']
                           ) & st.session_state['doneEBSD']:
                         col1, col2, col3 = st.columns ([1,1,2])
                         with col1: objEBSD.clear_all_band_disp_flgs()
@@ -63,7 +67,7 @@ if __name__ == '__main__':
 
                     # Conograph
                     elif (job_name == 'Conograph') & (
-                        st.session_state['doneEBSD'] | st.session_state['bdata_uploaded']):
+                        st.session_state['doneEBSD'] | st.session_state['bdata_ready']):
                         space_cono_exec = st.empty ()
                         objCono.params_menu ()
                         with space_cono_exec:
@@ -77,10 +81,12 @@ if __name__ == '__main__':
             'mainMenu', genMenus, key = 'general_menu',
             horizontal = True, label_visibility = 'hidden')
         
-        if name_radio in ['EBSD orignal image', 'EBSD元画像']:
+        if (not st.session_state['band_mode']) & (
+            name_radio in ['EBSD orignal image', 'EBSD元画像']):
             objEBSD.display_ebsd ()
 
-        elif name_radio in ['Bandsearch', 'バンドサーチ']:
+        elif (not st.session_state['band_mode']) & (
+            name_radio in ['Bandsearch', 'バンドサーチ']):
             menus = objMain.menus_disp['Bandsearch'][lang]
             tabs = st.tabs (menus)
             for tab, tab_name in zip (tabs, menus):

@@ -30,7 +30,7 @@ class MainClass:
                 'jpn' : [
                         'Conograph', 'バンドサーチ',
                         'EBSD元画像']},
-            {   'eng' : ['Conograph'], 'jpn' : ['COnograph']}
+            {   'eng' : ['Conograph'], 'jpn' : ['Conograph']}
             ]
         
         self.disp_ebsd = {'eng' : 'EBSD orignal image', 'jpn' : 'EBSD元画像'}
@@ -82,25 +82,28 @@ class MainClass:
             f.write (text)
         st.session_state['imgPath'] = os.path.join ('input', fname)
 
-    #-------------------------------------------------------
-    # ファイルのアップロード（EBSD画像、パラメータ）
-    #-------------------------------------------------------
-    def upload_files (self,):
-        uploaded = False
+    def upload_img (self,):
         lang = st.session_state['lang']
-
         img_file = st.file_uploader (
-            {'eng' : 'EBSD image file',
-             'jpn' : 'EBSD画像ファイル'}[lang],
-            type = ['jpg', 'jpeg', 'png', 'tif'], key = 'img')
-        
+                {'eng' : 'EBSD image file',
+                 'jpn' : 'EBSD画像ファイル'}[lang],
+                type = ['jpg', 'jpeg', 'png', 'tif'],
+                key = 'img')
+        return img_file
+
+    def upload_param (self, img_file = None):
+        lang = st.session_state['lang']
+        mode = int (st.session_state['band_mode'])
         if img_file is None: key = 'param'
         else: key = 'param_' + img_file.name
+        key = key + '_' + str (mode)
         param_file = st.file_uploader (
                 {'eng' : 'Parameter file (py)',
                 'jpn' : 'パラメータファイル (py)'}[lang],
                 type = ['py'], key = key)
-        
+        return param_file
+
+    def save_files (self, img_file, param_file):
         flg_new_file = False
         if img_file is not None:
             if st.session_state['file_name'] is not None:
@@ -121,26 +124,38 @@ class MainClass:
                 f.write (img_file.getbuffer())
 
             # params.pyは、同じフォルダへ保存
-            if os.path.exists (self.paramsPath):
-                os.remove (self.paramsPath)
-            with open (self.paramsPath, 'wb') as f:
-                f.write (param_file.getbuffer())
+            self.save_param_file (param_file)
             
             # file.pyは、同じフォルダへ保存
             self.make_file_py (fname)
-            uploaded = True
-            #st.session_state['param_name'] = param_file.name
             st.session_state['file_name'] = img_file.name
 
-        if uploaded:
             st.session_state['uploaded'] = True
             st.session_state['doneEBSD'] = False
             st.session_state['doneCono'] = False
-            st.session_state['bdata_uploaded'] = False
 
-        if flg_new_param:
+    def save_param_file (self, param_file):
+        if os.path.exists (self.paramsPath):
+                os.remove (self.paramsPath)
+        with open (self.paramsPath, 'wb') as f:
+            f.write (param_file.getbuffer())
+
+    #-------------------------------------------------------
+    # ファイルのアップロード（EBSD画像、パラメータ）
+    #-------------------------------------------------------
+    def upload_files (self,):
+        if not st.session_state['band_mode']:
+            img_file = self.upload_img ()        
+            param_file = self.upload_param (img_file)
+            self.save_files (img_file, param_file)
+
+        else:
             self.upload_banddata_file ()
-    
+            param_file = self.upload_param (None)
+            if param_file is not None:
+                self.save_param_file (param_file)
+                st.session_state['bdata_ready'] = True
+        
     def upload_banddata_file (self,):
         lang = st.session_state['lang']
 
@@ -167,19 +182,46 @@ class MainClass:
                     savePath = self.dataPath1)
                 st.session_state['bdata_uploaded'] = True
                 #st.session_state['doneEBSD'] = False
-                st.session_state['doneCono'] = False
+                #st.session_state['doneCono'] = False
 
             else:
                 st.session_state['bdata_uploaded'] = False
                 st.write (
                     {'eng' : 'Please upload correct data!!',
                     'jpn' : '正しいデータをアップロードして下さい!!'}[lang])
+                
+    def general_mode_select (self,):
+        lang = st.session_state['lang']
+        prev = st.session_state['band_mode']
+        sel = st.radio (
+            {'eng' : 'Select mode', 'jpn' : 'モード選択'}[lang],
+            {'eng' : ['Upload EBSD img', 'Upload band data'],
+             'jpn' : ['EBSD画像アップロード', 'バンドデータアップロード']}[lang],
+            key = 'mode_select', horizontal = True)
+
+        st.session_state['band_mode'] =\
+              sel in ['Upload band data', 'バンドデータアップロード']
+
+        if prev ^ st.session_state['band_mode']:
+            if st.session_state['band_mode']:
+                st.session_state['uploaded'] = False
+            else:
+                st.session_state['bdata_ready'] = False
+                st.session_state['file_name'] = ''
+            st.session_state['doneEBSD'] = False
+            st.session_state['doneCono'] = False
 
     def general_disp_menus (self,):
         lang = st.session_state['lang']
         menus = []
+        
+        if st.session_state['bdata_ready']:
+            if st.session_state['doneCono']:
+                menus = self.gen_disp[3][lang]
+            else:
+                menus = []
 
-        if st.session_state['doneCono']:
+        elif st.session_state['doneCono']:
             menus = self.gen_disp[2][lang]
         elif st.session_state['doneEBSD']:
             menus = self.gen_disp[1][lang]
@@ -217,12 +259,15 @@ class MainClass:
     # ----------------------------------------------------
     def menu_side_jobs (self,):
         lang = st.session_state['lang']
-        menu0 = {'eng': 'Upload',
+        menu_ul = {'eng': 'Upload',
                  'jpn' : 'アップロード'}[lang]
-        menu1 = {'eng' : 'Bandsearch',
+        menu_bs = {'eng' : 'Bandsearch',
                  'jpn' : 'バンドサーチ'}[lang]
-        menu_edit = {'eng' : 'Band data',
+        menu_ed = {'eng' : 'Band data',
                      'jpn' : 'バンドデータ'}[lang]
-        menu2 = 'Conograph'
-        menuList = [menu0, menu1, menu_edit, menu2]
+        menu_co = 'Conograph'
+        if st.session_state['band_mode']:
+            menuList = [menu_ul, menu_co]
+        else:
+            menuList = [menu_ul, menu_bs, menu_ed, menu_co]
         return menuList

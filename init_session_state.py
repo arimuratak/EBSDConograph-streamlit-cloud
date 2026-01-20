@@ -15,6 +15,8 @@ def build_session_state ():
         st.session_state['doneEBSD'] = None
     if 'doneCono' not in st.session_state:
         st.session_state['doneCono'] = None
+    #if 'doneCono_ul' not in st.session_state:
+    #    st.session_state['doneCono_ul'] = None
     if 'imgPath' not in st.session_state:
         st.session_state['imgPath'] = None
     if 'ArrayDeriv2' not in st.session_state:
@@ -47,6 +49,10 @@ def build_session_state ():
         st.session_state['ArraySinogramErrors'] = None
     if 'bdata_uploaded' not in st.session_state:
         st.session_state['bdata_uploaded'] = None
+    if 'bdata_ready' not in st.session_state:
+        st.session_state['bdata_ready'] = None
+    if 'band_mode' not in st.session_state:
+        st.session_state['band_mode'] = None
 
 def reset_session_state ():
     if st.session_state['uploaded'] is None:
@@ -55,6 +61,8 @@ def reset_session_state ():
         st.session_state['doneEBSD'] = False
     if st.session_state['doneCono'] is None:
         st.session_state['doneCono'] = False
+    #if st.session_state['doneCono_ul'] is None:
+    #    st.session_state['doneCono_ul'] = False
     if st.session_state['unix_time'] is None:
         st.session_state['unix_time'] = ''
     if st.session_state['edit_mode'] is None:
@@ -65,3 +73,7 @@ def reset_session_state ():
         st.session_state['BandKukans'] = []
     if st.session_state['bdata_uploaded'] is None:
         st.session_state['bdata_uploaded'] = False
+    if st.session_state['bdata_ready'] is None:
+        st.session_state['bdata_ready'] = False
+    if st.session_state['band_mode'] is None:
+        st.session_state['band_mode'] = False
