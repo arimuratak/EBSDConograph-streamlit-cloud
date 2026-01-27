@@ -18,6 +18,7 @@ class Conograph:
         self.outPath = 'result/out.txt'
         self.logPath = 'result/LOG_CONOGRAPH.txt'
 
+        # 結果表示用メッセージ
         self.key2label = {
             'lattice_const_before_refinement' : 'Lattice constant (a,b,c,α,β,γ), scale_factor (before refinement)',
             'lattice_const_after_refinement' : 'Lattice constant (a,b,c,α,β,γ), scale_factor, a/c, b/c, (after refinement)',
@@ -34,6 +35,7 @@ class Conograph:
 
         self.label2key = {v:k for k,v in self.key2label.items()}
 
+        # 表形式結果表示のためのカラム名
         self.cols_to_disp = {
             'lattice_const_before_refinement' : ['a', 'b', 'c', 'α', 'β', 'γ', 'sacle_factor'],
             'lattice_const_after_refinement' : [
@@ -54,9 +56,6 @@ class Conograph:
                 ]
             }
 
-        
-
-
         self.keys_lines = [
             'Buerger_lattice_basis_before_refinement',
             'Buerger_lattice_basis_after_refinement']
@@ -71,6 +70,7 @@ class Conograph:
             'axisRhombohedralSym', 'axisMonoclinicSym',
             'latexStyle']
         
+        # パラメータ表示ラベル
         self.cvtTbl = {
             'searchLevel' : 'Quick search/exhaustive search',
             'range_deg' : 'Upper bound on errors in Φ, σ, σ_begin, σ_end',
@@ -84,11 +84,18 @@ class Conograph:
             'axisMonoclinicSym' : 'Axis for monoclinic symmetry',
             'latexStyle' : 'Output in latex style'}
 
-
+    #-------------------------------------------------------
+    # band width未使用・使用　(0 or 1)によるファイルパスの選択
+    # (data0.txt, data1.txt) 
+    #-------------------------------------------------------
     def data0_or_1 (self, use_band_width):
         return {
             0 : self.dataPath0, 1 : self.dataPath1
                                 }[use_band_width]
+    
+    #-------------------------------------------------------
+    # パラメータ＆入力するバンドデータ取得・保存
+    #-------------------------------------------------------
     def prepare_data_params (self,):
         _, use_band_width = to_params_conograph (
                     self.paramsPathPy, self.paramsPath)
@@ -97,6 +104,9 @@ class Conograph:
             os.remove (self.dataPath)
         shutil.copyfile (dPath, self.dataPath)
 
+    #-------------------------------------------------------
+    # Conograph APIサーバー送信の準備
+    #-------------------------------------------------------
     def load_files (self,):
         #self.prepare_data_params ()
         uploaded_map = {}
@@ -106,6 +116,9 @@ class Conograph:
             uploaded_map['data.txt'] = f.read()
         return uploaded_map
 
+    #-------------------------------------------------------
+    # Conograph実行（APIサーバー）
+    #-------------------------------------------------------
     def conograph_exec (self,):
         uploaded_map = self.load_files ()
         mode = int (st.session_state['band_mode'])
@@ -124,6 +137,9 @@ class Conograph:
             return res
         return None
 
+    #-------------------------------------------------------
+    # Conograph実行後の結果保存（res：APIサーバーからの返信）
+    #-------------------------------------------------------
     def get_result (self, res):
         if res is None: ans = None
         else:
@@ -140,7 +156,10 @@ class Conograph:
                 ans = 'Error 500'
 
         return ans
-    
+
+    #-------------------------------------------------------
+    # Conograph実行logの取得（APIサーバーへアクセス）
+    #-------------------------------------------------------
     def request_log (self,):
         res = requests.post (
             self.api_url + '/log_file')
@@ -159,6 +178,9 @@ class Conograph:
 
         return ans
     
+    #-------------------------------------------------------
+    # Conograph実行log表示
+    #-------------------------------------------------------
     def display_log (self,):
         lang = st.session_state['lang']
         if os.path.exists (self.logPath):
@@ -175,6 +197,9 @@ class Conograph:
             st.text_area ('log', text, height = 400,
                     label_visibility='hidden')
 
+    #-------------------------------------------------------
+    # Conograp結果ファイルのダウンロードメニュー
+    #-------------------------------------------------------
     def download_result (self,):
         lang = st.session_state['lang']
         path = 'result/out.txt'
@@ -185,7 +210,10 @@ class Conograph:
                 data = f,
                 file_name = 'result.txt',
                 mime="text/plain")
-
+            
+    #-------------------------------------------------------
+    # Conograp結果データフレーム表示
+    #-------------------------------------------------------
     def display_as_df (self, cols, texts):
         if not isinstance (texts, list):
             texts = texts.split ('\n')
@@ -195,7 +223,9 @@ class Conograph:
         st.data_editor (df, num_rows = 'fixed',
                         disabled  =True, hide_index = True)
 
-
+    #-------------------------------------------------------
+    # Conograp全結果表示
+    #-------------------------------------------------------
     def display_result (self,):
         result, fms_max = read_out_file (self.outPath)
 
@@ -254,6 +284,12 @@ class Conograph:
                     else:
                         st.write (resultKey)
 
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # use_band_widthの選択
+    # '0 : use band centers' : data0.txt,
+    # '1 : use band edges' : data1.txt
+    #-------------------------------------------------------
     def set_data_0or1 (self, use_band_width):
         nums = ['0 : use band centers', '1 : use band edges']
         v = st.selectbox (
@@ -266,6 +302,10 @@ class Conograph:
             os.remove (self.dataPath)
         shutil.copyfile (dPath, self.dataPath)
 
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # '0 : Quick', '1 : Exhaustive'
+    #-------------------------------------------------------
     def select_search_level (self, v):
         vlist = ['0 : Quick', '1 : Exhaustive']
         label = self.cvtTbl['searchLevel']
@@ -275,6 +315,11 @@ class Conograph:
         v = vlist.index (v)
         return str (v)
 
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # 'Flags to fit the projection center shifts'
+    # 0 : No', '1 : Yes'
+    #-------------------------------------------------------
     def centerShift_dxdydz (self, v):
         vs = v.split()
         options = ['0 : No', '1 : Yes']
@@ -288,6 +333,10 @@ class Conograph:
             ans.append (str (v))
         return ans
 
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # Axis Rhombohedral Symmetry (Rhombohedral or Hexagonal)
+    #-------------------------------------------------------
     def axisRhombohedralSym (self, v):
         options = ['Rhombohedral', 'Hexagonal']
         select = st.selectbox (
@@ -295,7 +344,11 @@ class Conograph:
             options, index = options.index(v),
             key = 'axisRhonmbohedral')
         return select
-    
+
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # Axis Monoclinic Symmetry (A, B or C)
+    #-------------------------------------------------------
     def axisMonoclinicSym (self, v):
         options = ['A','B','C']
         select = st.selectbox (
@@ -304,6 +357,10 @@ class Conograph:
             key = 'axisMonoclinicSym')
         return select
 
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # Latex style ('0 : No', '1 : Yes')
+    #-------------------------------------------------------
     def latex_style (self, v):
         options = ['0 : No', '1 : Yes']
         select = st.selectbox (
@@ -313,6 +370,10 @@ class Conograph:
         select = options.index (select)
         return str (select)
 
+    #-------------------------------------------------------
+    # Conograph パラメータ
+    # 表示・変更メニュー
+    #-------------------------------------------------------
     def params_menu (self,):
         lang = st.session_state['lang']
         self.prepare_data_params ()

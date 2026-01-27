@@ -320,11 +320,8 @@ class EBSDClass:
     def display_2nd_der (self, key = '2ndDerivative'):
         fig, ax = self.image_2nd_der_with_line ()
         with st.container(border = True):
-            #st.image (img, use_container_width = True)
-            #st.pyplot (fig)
             img, ax_px = fig2img (fig, ax)
             res = streamlit_image_coordinates (img, key = key)
-            #st.session_state['last_coords'] = res
         
         return res, ax_px, img, ax
 
@@ -433,13 +430,10 @@ class EBSDClass:
         df = self.to_float (df)
         newDf = self.to_float (newDf)
 
-        df = df.drop ('flg', axis = 1)
-        newDf = newDf.drop ('flg', axis = 1)
-
         return df, newDf
 
     #---------------------------------------------------------
-    # バンドデータ表の表示（編集不可）
+    # バンドデータ表の表示（編集不可）※未使用
     #---------------------------------------------------------
     def df_for_monitor (self,):
         df = self.get_lines_for_display ()
@@ -464,7 +458,8 @@ class EBSDClass:
         return indices
 
     #----------------------------------------------------
-    # 表示されているデータ表変更検知（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
+    # 表示されているデータ表変更検知
+    # （index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # df : 表示データ表, newDf : data_editorの出力
     #----------------------------------------------------
     def judge_changed_df (self, df, newDf):
@@ -479,9 +474,9 @@ class EBSDClass:
         if len (indices) > 0:
             return None, None, indices, flg_len
 
-        # 行の変更
+        # 行の変更 (flgは除く)
         idx_changed = None; col_changed = None
-        for col in df.columns:
+        for col in [col for col in df.columns if col != 'flg']:
             olds = np.array (df[col].tolist())
             news = np.array (newDf[col].tolist())
             flgs = (olds != news).astype (int)
@@ -503,13 +498,21 @@ class EBSDClass:
             res = addBand_theta_rho (theta, rho)
         return res
     
+    #----------------------------------------------------
+    # EBSD画像のバンドの全非表示設定
+    # BandDataオブジェクトのdisplay flgをリセット
+    #----------------------------------------------------
     def clear_all_band_disp_flgs (self,):
         lang = st.session_state['lang']
         if st.button (
                 {'eng' : 'Hide all', 'jpn' : '全非表示'}[lang],
                 key = 'flg_reset'):
             for b in st.session_state['BandKukans']: b.setFlgDisp (False)
-        
+    
+    #----------------------------------------------------
+    # EBSD画像のバンドの全表示設定
+    # BandDataオブジェクトのdisplay flgをセット
+    #----------------------------------------------------
     def set_all_band_disp_flgs (self,):
         lang = st.session_state['lang']
         if st.button (
@@ -518,27 +521,28 @@ class EBSDClass:
             for b in st.session_state['BandKukans']: b.setFlgDisp (True)
 
     #----------------------------------------------------
-    # データ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
+    # バンドデータ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # 追加、行削除、数値変更 (θ, ρ_begin, ρ_end, ρ_center)
     #----------------------------------------------------
+    def is_clicked_flg (self, oldDf, newDf):
+         olds = np.array (oldDf['flg'].tolist ())
+         news = np.array (newDf['flg'].tolist ())
+         return (olds != news).any()
+
     def manage_data_editor (self, xydata = None, res = None):
-        #added = False
         if (res is not None) and (
             st.session_state['unix_time'] != str (res['unix_time'])):
             is_found = self.addBandThetaRho (xydata)
             if is_found == 'Found':
                 st.session_state['unix_time'] = str (res['unix_time'])
-                #added = True
-
+    
         lang = st.session_state['lang']
-        #doneIntsec = self.add_bands_intersection ()
-        #col1, col2, _, _ = st.columns (4)
-        #with col1:
-        #    self.clear_all_band_disp_flgs ()
-        #with col2:
-        #    self.set_all_band_disp_flgs ()
         col2 = st.empty ()
         old_df, new_df = self.df_for_edit (st.session_state['edit_mode'])
+        
+        # 2回クリック回避
+        if self.is_clicked_flg (old_df, new_df): st.rerun()
+        
         # idx, col : 変更された行番号とカラム名
         # indices : 削除された行番, flg : 行が追加された(True)        
         idx, col, indices, flg_expanded = self.judge_changed_df (old_df, new_df)
@@ -579,6 +583,10 @@ class EBSDClass:
               
         return (idx is not None) | (col is not None)
     
+    #----------------------------------------------------
+    # バンドサーチ結果ファイルダウンロード
+    # (data0.txt, data1.txtのzipファイル)
+    #----------------------------------------------------
     def download_data_file (self,):
         lang = st.session_state['lang']
         if all ([os.path.exists (file) for file in self.data_files]):
@@ -591,10 +599,10 @@ class EBSDClass:
                     file_name = 'data01.zip',
                     key = 'bandsearch_result_download')
 
-    def read_params (self,):
-        params = read_params ()
-        st.session_state['params'] = params
-
+    #----------------------------------------------------
+    # PC0パラメータの表示及び編集
+    # 
+    #----------------------------------------------------
     def param_PC0 (self, params):
         param_name = st.session_state['file_name']
         PC0 = params['PC0']
@@ -614,6 +622,10 @@ class EBSDClass:
         
         return ans
 
+    #----------------------------------------------------
+    # PC0以外のパラメータの表示及び編集
+    # Circleは、True/Falseの選択
+    #----------------------------------------------------
     def param_uniq (self, params, name = 'Circle'):
         param_name = st.session_state['file_name']
         vstr = str (params[name])
@@ -629,7 +641,13 @@ class EBSDClass:
                 st.write ('Please input numeric value!!')
 
         return ans
-    
+
+    #----------------------------------------------------
+    # バンドサーチパラメータの表示及び編集
+    # PC0, Circle, RescalParam, deg, num_points,
+    # thred, MinCorrelation, BAND_WIDTH_MIN, BAND_WIDTH_MAX,
+    # dtheta
+    #----------------------------------------------------
     def params_menu (self,):
         lang = st.session_state['lang']
         params = read_params (self.param_names,
@@ -651,6 +669,10 @@ class EBSDClass:
         if len (ans) > 0:
             update_params (params = ans, path = self.paramsPath)
 
+    #----------------------------------------------------
+    # バンドサーチ計算のlogを表示
+    # 
+    #----------------------------------------------------
     def display_log (self,):
         lang = st.session_state['lang']
         if os.path.exists (self.logPath):

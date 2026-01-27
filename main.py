@@ -32,14 +32,14 @@ if __name__ == '__main__':
         #--------------------------------------------------------
         side_jobs = objMain.menu_side_jobs ()
         if len (side_jobs) > 0:
-            print (st.session_state['band_mode'], st.session_state['uploaded'])
             tabs = st.tabs (side_jobs)
             for tab, job_name in zip (tabs, side_jobs):
                 with tab:
+                    # ファイルアップロードメニュー
                     if job_name in ['Upload', 'アップロード']:
                         _ = objMain.upload_files ()
 
-                    # バンドサーチ
+                    # バンドサーチ実行メニュー
                     elif (not st.session_state['band_mode']
                           ) & (job_name in ['Bandsearch','バンドサーチ']
                           ) & st.session_state['uploaded']:
@@ -47,7 +47,8 @@ if __name__ == '__main__':
                         objEBSD.params_menu ()
                         with space_bs_exec:
                             objEBSD.run_band_search ()
-                        
+                    
+                    # バンドデータ表示・編集メニュー                        
                     elif (not st.session_state['band_mode']
                           ) & (job_name in ['Band data', 'バンドデータ']
                           ) & st.session_state['doneEBSD']:
@@ -60,12 +61,9 @@ if __name__ == '__main__':
                         res = st.session_state['res_clicked']
                         edited = objEBSD.manage_data_editor (xydata, res)
                         if edited:
-                            st.write ({
-                                    'eng' : '＜＜For confirmation after edit＞＞',
-                                    'jpn' : '＜＜編集後の確認用＞＞'}[lang])
-                            objEBSD.df_for_monitor ()
+                            st.rerun ()
 
-                    # Conograph
+                    # Conograph実行メニュー
                     elif (job_name == 'Conograph') & (
                         st.session_state['doneEBSD'] | st.session_state['bdata_ready']):
                         space_cono_exec = st.empty ()
@@ -77,14 +75,17 @@ if __name__ == '__main__':
     # メイン表示部
     genMenus = objMain.general_disp_menus ()
     if len(genMenus) > 0:
+        #選択 EBSD生画像, バンドサーチ, Conograph
         name_radio = st.radio (
             'mainMenu', genMenus, key = 'general_menu',
             horizontal = True, label_visibility = 'hidden')
         
+        # EBSD元画像表示メニュー
         if (not st.session_state['band_mode']) & (
             name_radio in ['EBSD orignal image', 'EBSD元画像']):
             objEBSD.display_ebsd ()
 
+        # バンドサーチ結果＆log表示メニュー
         elif (not st.session_state['band_mode']) & (
             name_radio in ['Bandsearch', 'バンドサーチ']):
             menus = objMain.menus_disp['Bandsearch'][lang]
@@ -107,16 +108,12 @@ if __name__ == '__main__':
                                 st.write ('クリックは範囲外です')
                         elif is_clicked & (xydata is not None) & (res is not None) and (
                             st.session_state['unix_time'] != str (res['unix_time'])):
-                            with col2:
-                                _ = st.button (
-                                    {'eng' : 'Click to fix band adding',
-                                     'jpn' : 'バンド追加確定のためクリック'}[lang],
-                                     key = 'conf_add_band')
-
+                            st.rerun()
 
                     elif tab_name == 'EBSD log':
                         objEBSD.display_log ()
 
+        # Conograph結果＆log表示メニュー
         elif name_radio == 'Conograph':
             menus = objMain.menus_disp['Conograph'][lang]
             tabs = st.tabs (menus)

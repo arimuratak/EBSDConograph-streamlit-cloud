@@ -15,8 +15,6 @@ def build_session_state ():
         st.session_state['doneEBSD'] = None
     if 'doneCono' not in st.session_state:
         st.session_state['doneCono'] = None
-    #if 'doneCono_ul' not in st.session_state:
-    #    st.session_state['doneCono_ul'] = None
     if 'imgPath' not in st.session_state:
         st.session_state['imgPath'] = None
     if 'ArrayDeriv2' not in st.session_state:
@@ -61,8 +59,6 @@ def reset_session_state ():
         st.session_state['doneEBSD'] = False
     if st.session_state['doneCono'] is None:
         st.session_state['doneCono'] = False
-    #if st.session_state['doneCono_ul'] is None:
-    #    st.session_state['doneCono_ul'] = False
     if st.session_state['unix_time'] is None:
         st.session_state['unix_time'] = ''
     if st.session_state['edit_mode'] is None:

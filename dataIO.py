@@ -6,6 +6,9 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 
+#------------------------------------------------------
+# folder指定によるzipファイル生成
+#------------------------------------------------------
 def zip_folder(folder_path):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(
@@ -18,6 +21,9 @@ def zip_folder(folder_path):
     zip_buffer.seek(0)
     return zip_buffer
 
+#------------------------------------------------------
+# file指定(list)によるzipファイル生成
+#------------------------------------------------------
 def zip_files (files : list):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(
@@ -79,6 +85,9 @@ def cvtPos (res, ax_px, ax, img_h):
         ydata *= -1
         return xdata, ydata
 
+#------------------------------------------------------
+# param.pyの読込み（namesにより指定）
+#------------------------------------------------------
 def read_params (names = [
             'PC0', 'Circle', 'RescaleParam', 'deg', 'num_points',
             'thred', 'MinCorrelation',
@@ -99,6 +108,9 @@ def read_params (names = [
 
     return ans
 
+#------------------------------------------------------
+# param.pyの更新
+#------------------------------------------------------
 def update_params (params : dict, path = 'params.py'):
     ans = []
     names = list (params.keys())
@@ -131,6 +143,9 @@ def read_params_import_bandsearch ():
 
     return ans
 
+#------------------------------------------------------
+# param.pyの読込み、Conographの実行形式にて保存
+#------------------------------------------------------
 def to_params_conograph (readPath = None,
                     savePath = 'input/input.txt', params = None):
     namesDict  = {
@@ -174,6 +189,9 @@ def to_params_conograph (readPath = None,
         f.write (ans)
     return params, use_band_width
 
+#------------------------------------------------------
+# Conographの結果ファイルから、Kikuchi radiusを取得
+#------------------------------------------------------
 def read_kikuchi_radius (path):
     f = open (path, 'r', encoding = 'utf-8')
     line = list (f.readlines())[1]
@@ -181,6 +199,10 @@ def read_kikuchi_radius (path):
     value = re.findall(r"\d+\.\d+", line)[0]
     return value
 
+#------------------------------------------------------
+# Conographの結果ファイルから、Summaryを取得
+# fmsは、Figure of merit
+#------------------------------------------------------
 def read_cono_summary (path = 'result/out.txt'):
     ans = {}; fms = []
     nums = ['({})'.format(i) for i in range (1,15)]
@@ -195,6 +217,10 @@ def read_cono_summary (path = 'result/out.txt'):
             if len (ans) == 14: break
     return ans, np.argmax (fms)
 
+#---------------------------------------------------------
+# Conograph出力ファイルの読込み
+# 
+#---------------------------------------------------------
 def put_separate (text):
     return re.sub(r'(?<=\d)\s+(?=[\-\d])', ', ', text)
 
@@ -202,7 +228,9 @@ def read_out_file(path):
     lattice = None
     candNo = None
     ans = {}
+    # Kikushi radian
     ans['rad_kikuchi'] = read_kikuchi_radius (path)
+    # Conograph結果のSummary
     ans['summary'], fms_max = read_cono_summary (path)
     
     with open(path, 'r' ,encoding = 'utf-8') as f:
@@ -263,6 +291,10 @@ def read_out_file(path):
 
     return ans, fms_max
 
+#---------------------------------------------------------
+# Conographパラメータの読込み(input.txt)
+#
+#---------------------------------------------------------
 def read_input_txt (names, path = 'input/input.txt'):
     with open (path, 'r', encoding = 'utf-8') as f:
         lines = list (f.readlines())
@@ -276,17 +308,27 @@ def read_input_txt (names, path = 'input/input.txt'):
         if len (names) == 0: break
     return ans
 
+#---------------------------------------------------------
+# stringデータが数値か？
+#---------------------------------------------------------
 def is_numeric (value):
     try:
         float (value)
         return True
     except ValueError:
         return False
-    
+
+#---------------------------------------------------------
+# log保存
+#---------------------------------------------------------
 def save_logsList (logs, path):
     with open (path, 'w', encoding = 'utf-8') as f:
         f.write ('\n'.join (logs))
 
+#---------------------------------------------------------
+# Uploadされたバンドデータファイルの読み取り
+# flg : 全データは数値か? 
+#---------------------------------------------------------
 def bdata_check (path = 'result/data_uploaded.txt'):
     with open (path, 'r', encoding = 'utf-8') as f:
         lines = list (f.readlines ())
@@ -318,6 +360,9 @@ def bdata_check (path = 'result/data_uploaded.txt'):
     df = pd.DataFrame (df, columns = cols)
     return flg, df
 
+#---------------------------------------------------------
+# bandデータの更新(use_band_width 0 or 1 のみ) 
+#---------------------------------------------------------
 def update_use_band_width (use_band_width = 1,
                     readPath = 'input/bdata_uploaded.txt',
                     savePath = 'result/data1.txt'):
