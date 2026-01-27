@@ -60,8 +60,6 @@ if __name__ == '__main__':
                         xydata = st.session_state['xydata']
                         res = st.session_state['res_clicked']
                         edited = objEBSD.manage_data_editor (xydata, res)
-                        if edited:
-                            st.rerun ()
 
                     # Conograph実行メニュー
                     elif (job_name == 'Conograph') & (

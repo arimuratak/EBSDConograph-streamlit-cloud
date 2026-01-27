@@ -524,8 +524,11 @@ class EBSDClass:
     # バンドデータ表関連処理（index, 相関値, θ, ρ_center, ρ_begin, ρ_end）
     # 追加、行削除、数値変更 (θ, ρ_begin, ρ_end, ρ_center)
     #----------------------------------------------------
-    def is_clicked_flg (self, oldDf, newDf):
-         olds = np.array (oldDf['flg'].tolist ())
+    def is_clicked_flg (self, oldDf, newDf, indices):
+         olds = oldDf['flg'].tolist()
+         for idx in sorted (indices, reverse = True):
+             del olds[idx]
+         olds = np.array (olds)
          news = np.array (newDf['flg'].tolist ())
          return (olds != news).any()
 
@@ -540,12 +543,11 @@ class EBSDClass:
         col2 = st.empty ()
         old_df, new_df = self.df_for_edit (st.session_state['edit_mode'])
         
-        # 2回クリック回避
-        if self.is_clicked_flg (old_df, new_df): st.rerun()
-        
         # idx, col : 変更された行番号とカラム名
         # indices : 削除された行番, flg : 行が追加された(True)        
         idx, col, indices, flg_expanded = self.judge_changed_df (old_df, new_df)
+        # 2回クリック回避
+        if self.is_clicked_flg (old_df, new_df, indices): st.rerun()
         
         if flg_expanded:
             with col2:
@@ -575,11 +577,13 @@ class EBSDClass:
             st.session_state['edit_mode'] = 'not_changed'
         
         if ((idx is not None) & (col is not None)) | (len (indices) > 0):
-            with col2:
-                st.button ({
-                    'eng' : 'Click to fix data change',
-                    'jpn' : 'データ変更確定のためクリック'}[lang],
-                    'edit_confirmed')
+            st.rerun()
+            #with col2:
+                
+            #    st.button ({
+            #        'eng' : 'Click to fix data change',
+            #        'jpn' : 'データ変更確定のためクリック'}[lang],
+            #        'edit_confirmed')
               
         return (idx is not None) | (col is not None)
     
