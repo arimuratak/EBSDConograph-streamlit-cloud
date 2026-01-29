@@ -14,7 +14,11 @@ if __name__ == '__main__':
     objCono = Conograph ()
 
     # メイン側のレイアウト
-    title_place = st.title (title)
+    col_title1, col_title2 = st.columns (2)
+    with col_title1:
+        title_place = st.title (title)
+    with col_title2 :
+        st.markdown ('Github repository : https://github.com/arimuratak/EBSDConograph-streamlit-cloud')
     img_disp = st.empty() # 画像表示エリア
     result_disp = st.empty () 
 
@@ -98,6 +102,10 @@ if __name__ == '__main__':
                         with col1:  
                             st.write ({'eng' : '＜＜2nd Derivative＞＞',
                                     'jpn' : '＜＜2次微分画像＞＞'}[lang])
+                        with col2:
+                            st.write ({
+                                'eng' : 'Click on the position to add band!!',
+                                'jpn' : 'バンド追加したい場合はクリック'}[lang])
                         xydata, is_clicked, res = objEBSD.display_clicked_point ()
                         st.session_state['xydata'] = xydata
                         st.session_state['res_clicked'] = res
