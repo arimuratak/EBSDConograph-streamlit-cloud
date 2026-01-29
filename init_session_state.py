@@ -51,6 +51,8 @@ def build_session_state ():
         st.session_state['bdata_ready'] = None
     if 'band_mode' not in st.session_state:
         st.session_state['band_mode'] = None
+    if 'is_edited' not in st.session_state:
+        st.session_state['is_edited'] = None
 
 def reset_session_state ():
     if st.session_state['uploaded'] is None:
@@ -73,3 +75,5 @@ def reset_session_state ():
         st.session_state['bdata_ready'] = False
     if st.session_state['band_mode'] is None:
         st.session_state['band_mode'] = False
+    if st.session_state['is_edited'] is None:
+        st.session_state['is_edited'] = False

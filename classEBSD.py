@@ -413,6 +413,7 @@ class EBSDClass:
                 df, hide_index = True,
                 num_rows = 'dynamic',
                 key = key,
+                #key = 'data_edtor',
                 #disabled = self.cols
                 disabled = ['idx', 'score'],
                 column_config = {
@@ -547,8 +548,10 @@ class EBSDClass:
         # indices : 削除された行番, flg : 行が追加された(True)        
         idx, col, indices, flg_expanded = self.judge_changed_df (old_df, new_df)
         # 2回クリック回避
-        if self.is_clicked_flg (old_df, new_df, indices): st.rerun()
-        
+        #if self.is_clicked_flg (old_df, new_df, indices): st.rerun()
+        is_clicked_flg = self.is_clicked_flg (old_df, new_df, indices)
+        #if is_clicked_flg: st.rerun()
+
         if flg_expanded:
             with col2:
                 st.write (
@@ -571,7 +574,7 @@ class EBSDClass:
                 removeBands ([idx])
                 logs = addBand_theta_edges (theta, rhomin, rhomax)
                 save_logsList(logs, self.logPath)
-            st.session_state['edit_mode'] = 'changed' + str (idx) + col + str (random.choice(list(range(1,1000))))
+            st.session_state['edit_mode'] = 'changed' #+ str (idx) + col + str (random.choice(list(range(1,1000))))
 
         else:
             st.session_state['edit_mode'] = 'not_changed'
@@ -584,8 +587,9 @@ class EBSDClass:
             #        'eng' : 'Click to fix data change',
             #        'jpn' : 'データ変更確定のためクリック'}[lang],
             #        'edit_confirmed')
-              
-        return (idx is not None) | (col is not None)
+        #st.session_state['is_edited'] = ((idx is not None) | (col is not None))| (len (indices) > 0) | is_clicked_flg
+        st.session_state['is_edited'] = is_clicked_flg
+        #return ((idx is not None) | (col is not None))| (len (indices) > 0) | is_clicked_flg
     
     #----------------------------------------------------
     # バンドサーチ結果ファイルダウンロード

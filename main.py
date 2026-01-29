@@ -122,3 +122,5 @@ if __name__ == '__main__':
                     elif tab_name == 'Conograph log':
                         objCono.request_log ()
                         objCono.display_log ()
+
+    if st.session_state['is_edited']: st.rerun()
